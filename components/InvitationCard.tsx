@@ -319,7 +319,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               }}>
                 الافتتاح
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5 }}>
+              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
                 الساعة الثامنة صباحاً<br />
                 {dateStart}<br />
                 <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
@@ -338,7 +338,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               }}>
                 الأمسية الختامية الكبرى
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5 }}>
+              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
                 الساعة السابعة مساءً<br />
                 {dateEnd}<br />
                 <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>

@@ -22,7 +22,7 @@ async function loadConfig() {
 }
 
 // SVG Mosque — renders perfectly in html2canvas unlike emojis
-function MosqueSVG({ size = 110 }: { size?: number }) {
+function MosqueSVG({ size = 80 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Main dome */}
@@ -99,7 +99,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     import('qrcode').then(QRCode => {
       const qrData = JSON.stringify({ reg: attendee.registration_number, app: 'seerah-conf' });
       QRCode.toCanvas(qrCanvasRef.current, qrData, {
-        width: 110,
+        width: 90,
         margin: 1,
         color: { dark: '#1a4a1a', light: '#ffffff' },
         errorCorrectionLevel: 'H',
@@ -132,24 +132,14 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
       useCORS: true,
       logging: false,
       allowTaint: true,
-      foreignObjectRendering: true,
-      onclone: (clonedDoc) => {
-        // Ensure all Arabic text in the clone uses the correct font and direction
-        const allElements = clonedDoc.querySelectorAll('*');
-        allElements.forEach((el) => {
-          const htmlEl = el as HTMLElement;
-          if (htmlEl.style) {
-            htmlEl.style.fontFamily = htmlEl.style.fontFamily || 'Cairo, Amiri, serif';
-          }
-        });
-      },
+      foreignObjectRendering: false,
     });
   };
 
   const downloadAsPNG = async () => {
     setDownloading(true);
     try {
-      const canvas = await captureCard(4);
+      const canvas = await captureCard(3);
       const link = document.createElement('a');
       link.download = `invitation-${attendee.registration_number}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -164,37 +154,18 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   const downloadAsPDF = async () => {
     setDownloading(true);
     try {
-      const canvas = await captureCard(6);
-      const { default: jsPDF } = await import('jspdf');
-      const imgData = canvas.toDataURL('image/png');
-
-      // A5 size in mm: 148 x 210
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a5',
-      });
-
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-
-      // Calculate image dimensions to fit the page with margins
-      const margin = 5;
-      const imgWidth = pageWidth - margin * 2;
-      const imgHeight = (canvas.height / canvas.width) * imgWidth;
-      const yOffset = Math.max(margin, (pageHeight - imgHeight) / 2);
-
-      pdf.addImage(imgData, 'PNG', margin, yOffset, imgWidth, imgHeight, undefined, 'FAST');
-      pdf.save(`invitation-${attendee.registration_number}.pdf`);
+      const url = `/api/invitation-pdf?reg=${encodeURIComponent(attendee.registration_number)}`;
+      // Mobile browsers (especially in-app browsers like WhatsApp/Instagram webviews)
+      // frequently block or silently fail on blob-URL + programmatic-click downloads.
+      // Opening the PDF URL directly in a new tab is far more reliable across devices —
+      // the browser's native PDF viewer/download handler takes over from there.
+      window.open(url, '_blank');
     } catch (error) {
       console.error('PDF error:', error);
-      alert('حدث خطأ أثناء تحميل PDF. يرجى المحاولة مرة أخرى.');
     } finally {
       setDownloading(false);
     }
   };
-
-  const handlePrint = () => { window.print(); };
 
   const dateParts = confDate.split('-');
   const dateStart = dateParts[0]?.trim() || confDate;
@@ -244,7 +215,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             display: 'flex',
             gap: '6px',
             padding: '8px',
-            height: '95px',
+            height: '75px',
             background: '#1a5c2a',
             borderBottom: '2px solid #c9a84c',
           }}>
@@ -255,7 +226,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               overflow: 'hidden',
               backgroundImage: 'url(/dome.jpeg)',
               backgroundSize: 'cover',
-              backgroundPosition: 'center top',
+              backgroundPosition: 'center 30%',
               backgroundRepeat: 'no-repeat',
               imageRendering: 'high-quality' as any,
             }} />
@@ -284,15 +255,15 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           </div>
 
           {/* Conference title */}
-          <div style={{ textAlign: 'center', padding: '12px 20px 6px', position: 'relative' }}>
-            <span style={{ position: 'absolute', top: '8px', right: '8px', color: '#c9a84c', fontSize: '16px', opacity: 0.7 }}>✦ ✦</span>
-            <span style={{ position: 'absolute', top: '8px', left: '8px', color: '#c9a84c', fontSize: '16px', opacity: 0.7 }}>✦ ✦</span>
+          <div style={{ textAlign: 'center', padding: '8px 20px 5px', position: 'relative' }}>
+            <span style={{ position: 'absolute', top: '6px', right: '8px', color: '#c9a84c', fontSize: '14px', opacity: 0.7 }}>✦ ✦</span>
+            <span style={{ position: 'absolute', top: '6px', left: '8px', color: '#c9a84c', fontSize: '14px', opacity: 0.7 }}>✦ ✦</span>
             <div style={{
-              fontSize: '26px',
+              fontSize: '21px',
               fontFamily: 'Amiri, serif',
               color: '#1a4a1a',
               fontWeight: 'bold',
-              lineHeight: 1.5,
+              lineHeight: 1.3,
               letterSpacing: '0.3px',
             }}>
               {confName}
@@ -301,19 +272,19 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         </div>
 
         {/* BOTTOM SECTION */}
-        <div style={{ background: '#ffffff', padding: '16px', position: 'relative' }}>
+        <div style={{ background: '#ffffff', padding: '12px 16px', position: 'relative' }}>
 
           <p style={{
-            textAlign: 'center', color: '#1a1a1a', fontSize: '13px',
+            textAlign: 'center', color: '#1a1a1a', fontSize: '12px',
             fontFamily: 'Cairo, sans-serif', fontWeight: '700',
-            marginBottom: '6px', lineHeight: 1.8,
+            marginBottom: '4px', lineHeight: 1.6,
           }}>
             تحت الرعاية السامية لفخامة رئيس الجمهورية
           </p>
 
           <p style={{
-            textAlign: 'center', color: '#333', fontSize: '12px',
-            fontFamily: 'Cairo, sans-serif', marginBottom: '14px', lineHeight: 1.8,
+            textAlign: 'center', color: '#333', fontSize: '11px',
+            fontFamily: 'Cairo, sans-serif', marginBottom: '10px', lineHeight: 1.6,
           }}>
             يشرّفنا دعوتكم بحضور فعاليات {confName}
             <br />لحضور حفلي الافتتاح والاختتام
@@ -325,68 +296,68 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
             border: '2px solid #2d6e2d',
             borderRadius: '6px',
-            padding: '14px 20px',
-            marginBottom: '16px',
+            padding: '10px 16px',
+            marginBottom: '10px',
           }}>
             <p dir="rtl" style={{
-              color: '#1a5c1a', fontSize: '11px', fontFamily: 'Cairo, sans-serif',
-              marginBottom: '6px', letterSpacing: '1px', fontWeight: '600',
+              color: '#1a5c1a', fontSize: '10px', fontFamily: 'Cairo, sans-serif',
+              marginBottom: '4px', letterSpacing: '1px', fontWeight: '600',
             }}>
               يتشرّف بحضوركم الكريم
             </p>
             <p style={{
-              color: '#1a1a1a', fontSize: '22px', fontWeight: 'bold',
-              fontFamily: 'Cairo, sans-serif', lineHeight: 1.4,
+              color: '#1a1a1a', fontSize: '20px', fontWeight: 'bold',
+              fontFamily: 'Cairo, sans-serif', lineHeight: 1.3,
               wordBreak: 'break-word',
             }}>
               {attendee.full_name}
             </p>
             <p style={{
-              color: '#666', fontSize: '11px', fontFamily: 'monospace',
-              marginTop: '6px', letterSpacing: '1px',
+              color: '#666', fontSize: '10px', fontFamily: 'monospace',
+              marginTop: '4px', letterSpacing: '1px',
             }}>
               {attendee.registration_number}
             </p>
           </div>
 
           {/* Opening / Closing columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
             <div style={{
               background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
               border: '1px solid #2d6e2d', borderRadius: '6px',
-              padding: '10px 12px', textAlign: 'center',
+              padding: '8px 10px', textAlign: 'center',
             }}>
               <div style={{
                 background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '12px',
-                fontWeight: 'bold', padding: '4px 12px', borderRadius: '4px',
-                marginBottom: '8px', display: 'inline-block',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '11px',
+                fontWeight: 'bold', padding: '3px 10px', borderRadius: '4px',
+                marginBottom: '6px', display: 'inline-block',
               }}>
                 الافتتاح
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '11px', fontFamily: 'Cairo, sans-serif', lineHeight: 2 }}>
+              <p style={{ color: '#1a1a1a', fontSize: '10px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.7 }}>
                 الساعة الثامنة صباحاً<br />
                 {dateStart}<br />
-                <span style={{ color: '#555', fontSize: '10px' }}>{confLocation}</span>
+                <span style={{ color: '#555', fontSize: '9px' }}>{confLocation}</span>
               </p>
             </div>
             <div style={{
               background: 'linear-gradient(135deg, #fffde7, #fff8e1)',
               border: '1px solid #c9a84c', borderRadius: '6px',
-              padding: '10px 12px', textAlign: 'center',
+              padding: '8px 10px', textAlign: 'center',
             }}>
               <div style={{
                 background: 'linear-gradient(90deg, #c9a84c, #f0d080)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '12px',
-                fontWeight: 'bold', padding: '4px 12px', borderRadius: '4px',
-                marginBottom: '8px', display: 'inline-block',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '11px',
+                fontWeight: 'bold', padding: '3px 10px', borderRadius: '4px',
+                marginBottom: '6px', display: 'inline-block',
               }}>
                 الأمسية الختامية الكبرى
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '11px', fontFamily: 'Cairo, sans-serif', lineHeight: 2 }}>
+              <p style={{ color: '#1a1a1a', fontSize: '10px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.7 }}>
                 الساعة السابعة مساءً<br />
                 {dateEnd}<br />
-                <span style={{ color: '#555', fontSize: '10px' }}>{confLocation}</span>
+                <span style={{ color: '#555', fontSize: '9px' }}>{confLocation}</span>
               </p>
             </div>
           </div>
@@ -394,26 +365,26 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           {/* QR Code row */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '16px', padding: '12px',
+            gap: '14px', padding: '10px',
             background: 'linear-gradient(135deg, #f5f0e0, #ede8d0)',
             borderRadius: '8px', border: '1px solid #c9a84c',
           }}>
             <div style={{ textAlign: 'center' }}>
-              <p style={{ color: '#1a5c1a', fontSize: '12px', fontFamily: 'Cairo, sans-serif', fontWeight: '700', marginBottom: '4px' }}>
+              <p style={{ color: '#1a5c1a', fontSize: '11px', fontFamily: 'Cairo, sans-serif', fontWeight: '700', marginBottom: '3px' }}>
                 بطاقة الدخول الإلكترونية
               </p>
-              <p style={{ color: '#555', fontSize: '10px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.6 }}>
+              <p style={{ color: '#555', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5 }}>
                 امسح رمز QR عند الدخول
               </p>
-              <p style={{ color: '#c9a84c', fontSize: '10px', fontFamily: 'monospace', marginTop: '4px' }}>
+              <p style={{ color: '#c9a84c', fontSize: '9px', fontFamily: 'monospace', marginTop: '3px' }}>
                 {attendee.registration_number}
               </p>
             </div>
             <div style={{
-              background: '#fff', padding: '6px', borderRadius: '6px',
+              background: '#fff', padding: '5px', borderRadius: '6px',
               border: '2px solid #2d6e2d', flexShrink: 0,
             }}>
-              <canvas ref={qrCanvasRef} width={110} height={110} style={{ display: 'block' }} />
+              <canvas ref={qrCanvasRef} width={90} height={90} style={{ display: 'block', width: '90px', height: '90px' }} />
             </div>
           </div>
         </div>
@@ -421,9 +392,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         {/* Bottom message */}
         <div dir="rtl" style={{
           background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d, #1a5c1a)',
-          padding: '10px 16px', textAlign: 'center',
-          color: '#fff', fontSize: '12px',
-          fontFamily: 'Amiri, serif', letterSpacing: '0.5px', lineHeight: 1.7,
+          padding: '8px 16px', textAlign: 'center',
+          color: '#fff', fontSize: '11px',
+          fontFamily: 'Amiri, serif', letterSpacing: '0.5px', lineHeight: 1.6,
         }}>
           ❝ معًا لنصرة الحبيب المصطفى ﷺ، وترسيخ محبته في القلوب، ونصرة الأشقاء في فلسطين ❞
         </div>
@@ -447,12 +418,6 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           style={{ background: 'rgba(184,134,11,0.1)', border: '1.5px solid rgba(184,134,11,0.4)', color: 'var(--color-gold-dark)' }}>
           <span>📄</span>
           <span>{downloading ? 'جاري التحميل...' : 'تحميل PDF'}</span>
-        </button>
-        <button onClick={handlePrint}
-          className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all hover:opacity-90"
-          style={{ background: 'rgba(26,92,42,0.08)', border: '1.5px solid rgba(26,92,42,0.2)', color: 'var(--color-green)' }}>
-          <span>🖨️</span>
-          <span>طباعة</span>
         </button>
       </div>
     </div>

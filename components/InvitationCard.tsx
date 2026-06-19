@@ -22,7 +22,7 @@ async function loadConfig() {
 }
 
 // SVG Mosque — renders perfectly in html2canvas unlike emojis
-function MosqueSVG({ size = 80 }: { size?: number }) {
+function MosqueSVG({ size = 110 }: { size?: number }) {
   return (
     <svg width={size} height={size} viewBox="0 0 80 80" fill="none" xmlns="http://www.w3.org/2000/svg">
       {/* Main dome */}
@@ -132,14 +132,24 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
       useCORS: true,
       logging: false,
       allowTaint: true,
-      foreignObjectRendering: false,
+      foreignObjectRendering: true,
+      onclone: (clonedDoc) => {
+        // Ensure all Arabic text in the clone uses the correct font and direction
+        const allElements = clonedDoc.querySelectorAll('*');
+        allElements.forEach((el) => {
+          const htmlEl = el as HTMLElement;
+          if (htmlEl.style) {
+            htmlEl.style.fontFamily = htmlEl.style.fontFamily || 'Cairo, Amiri, serif';
+          }
+        });
+      },
     });
   };
 
   const downloadAsPNG = async () => {
     setDownloading(true);
     try {
-      const canvas = await captureCard(3);
+      const canvas = await captureCard(4);
       const link = document.createElement('a');
       link.download = `invitation-${attendee.registration_number}.png`;
       link.href = canvas.toDataURL('image/png');
@@ -154,17 +164,31 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   const downloadAsPDF = async () => {
     setDownloading(true);
     try {
-      const res = await fetch(`/api/invitation-pdf?reg=${encodeURIComponent(attendee.registration_number)}`);
-      if (!res.ok) throw new Error('PDF request failed');
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `invitation-${attendee.registration_number}.pdf`;
-      link.click();
-      URL.revokeObjectURL(url);
+      const canvas = await captureCard(6);
+      const { default: jsPDF } = await import('jspdf');
+      const imgData = canvas.toDataURL('image/png');
+
+      // A5 size in mm: 148 x 210
+      const pdf = new jsPDF({
+        orientation: 'portrait',
+        unit: 'mm',
+        format: 'a5',
+      });
+
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+
+      // Calculate image dimensions to fit the page with margins
+      const margin = 5;
+      const imgWidth = pageWidth - margin * 2;
+      const imgHeight = (canvas.height / canvas.width) * imgWidth;
+      const yOffset = Math.max(margin, (pageHeight - imgHeight) / 2);
+
+      pdf.addImage(imgData, 'PNG', margin, yOffset, imgWidth, imgHeight, undefined, 'FAST');
+      pdf.save(`invitation-${attendee.registration_number}.pdf`);
     } catch (error) {
       console.error('PDF error:', error);
+      alert('حدث خطأ أثناء تحميل PDF. يرجى المحاولة مرة أخرى.');
     } finally {
       setDownloading(false);
     }

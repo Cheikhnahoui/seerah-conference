@@ -36,7 +36,7 @@ export interface Stats {
   total_registered: number;
   total_attended: number;
   attendance_rate: number;
-  by_city: { city: string; count: number }[];
+  by_city: { city: string; count: number; attended: number }[];
 }
 
 export interface ApiResponse<T = unknown> {

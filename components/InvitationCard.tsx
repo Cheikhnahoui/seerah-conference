@@ -259,19 +259,19 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         <div style={{ background: '#ffffff', padding: '14px 16px 12px', position: 'relative' }}>
 
           <p style={{
-            textAlign: 'center', color: '#1a1a1a', fontSize: '12px',
+            textAlign: 'center', color: '#1a1a1a', fontSize: '11px',
             fontFamily: 'Cairo, sans-serif', fontWeight: '700',
-            marginBottom: '4px', lineHeight: 1.6,
+            marginBottom: '6px', lineHeight: 1.8,
           }}>
-            تحت الرعاية السامية لفخامة رئيس الجمهورية
+            تحت الرعاية السامية لفخامة رئيس الجمهورية السيد محمد ولد الشيخ الغزواني
           </p>
 
           <p style={{
-            textAlign: 'center', color: '#333', fontSize: '11px',
-            fontFamily: 'Cairo, sans-serif', marginBottom: '10px', lineHeight: 1.6,
+            textAlign: 'center', color: '#333', fontSize: '10.5px',
+            fontFamily: 'Cairo, sans-serif', marginBottom: '10px', lineHeight: 1.8,
           }}>
-            يشرّفنا دعوتكم بحضور فعاليات {confName}
-            <br />لحضور حفلي الافتتاح والاختتام
+            يتشرف فضيلة الشيخ محمد الحافظ النحوي رئيس التجمع الثقافي الإسلامي بدعوتكم
+            <br />لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ38 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم
           </p>
 
           {/* Attendee name */}

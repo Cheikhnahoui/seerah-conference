@@ -119,15 +119,16 @@ const styles = StyleSheet.create({
   patronLine: {
     ...RTL,
     textAlign: 'center',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: 'bold',
     color: '#1a1a1a',
-    marginBottom: 5,
+    marginBottom: 6,
+    lineHeight: 1.6,
   },
   inviteLine: {
     ...RTL,
     textAlign: 'center',
-    fontSize: 10,
+    fontSize: 9.5,
     color: '#333333',
     marginBottom: 12,
     lineHeight: 1.6,
@@ -335,9 +336,9 @@ export function InvitationPDF({
 
           {/* Bottom section */}
           <View style={styles.bottomSection}>
-            <Text style={styles.patronLine}>تحت الرعاية السامية لفخامة رئيس الجمهورية</Text>
+            <Text style={styles.patronLine}>تحت الرعاية السامية لفخامة رئيس الجمهورية السيد محمد ولد الشيخ الغزواني</Text>
             <Text style={styles.inviteLine}>
-              يشرّفنا دعوتكم بحضور فعاليات {confName}{'\n'}لحضور حفلي الافتتاح والاختتام
+              يتشرف فضيلة الشيخ محمد الحافظ النحوي رئيس التجمع الثقافي الإسلامي بدعوتكم{'\n'}لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ38 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم
             </Text>
 
             <View style={styles.attendeeBox}>

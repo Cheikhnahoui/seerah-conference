@@ -213,16 +213,16 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           {/* === THREE IMAGES BANNER === */}
           <div style={{
             display: 'flex',
-            gap: '6px',
-            padding: '8px',
-            height: '75px',
+            gap: '8px',
+            padding: '10px',
+            height: '140px',
             background: '#1a5c2a',
             borderBottom: '2px solid #c9a84c',
           }}>
             {/* Left: Dome of the Rock */}
             <div style={{
               flex: 1,
-              borderRadius: '8px',
+              borderRadius: '10px',
               overflow: 'hidden',
               backgroundImage: 'url(/dome.jpeg)',
               backgroundSize: 'cover',
@@ -233,8 +233,8 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             {/* Center: GCI Logo */}
             <div style={{
               flexShrink: 0,
-              width: '120px',
-              borderRadius: '8px',
+              width: '170px',
+              borderRadius: '10px',
               overflow: 'hidden',
               border: '2px solid #c9a84c',
             }}>
@@ -244,7 +244,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             {/* Right: Green Dome */}
             <div style={{
               flex: 1,
-              borderRadius: '8px',
+              borderRadius: '10px',
               overflow: 'hidden',
               backgroundImage: 'url(/green-dome.jpeg)',
               backgroundSize: 'cover',
@@ -253,26 +253,10 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               imageRendering: 'high-quality' as any,
             }} />
           </div>
-
-          {/* Conference title */}
-          <div style={{ textAlign: 'center', padding: '8px 20px 5px', position: 'relative' }}>
-            <span style={{ position: 'absolute', top: '6px', right: '8px', color: '#c9a84c', fontSize: '14px', opacity: 0.7 }}>✦ ✦</span>
-            <span style={{ position: 'absolute', top: '6px', left: '8px', color: '#c9a84c', fontSize: '14px', opacity: 0.7 }}>✦ ✦</span>
-            <div style={{
-              fontSize: '21px',
-              fontFamily: 'Amiri, serif',
-              color: '#1a4a1a',
-              fontWeight: 'bold',
-              lineHeight: 1.3,
-              letterSpacing: '0.3px',
-            }}>
-              {confName}
-            </div>
-          </div>
         </div>
 
         {/* BOTTOM SECTION */}
-        <div style={{ background: '#ffffff', padding: '12px 16px', position: 'relative' }}>
+        <div style={{ background: '#ffffff', padding: '14px 16px 12px', position: 'relative' }}>
 
           <p style={{
             textAlign: 'center', color: '#1a1a1a', fontSize: '12px',
@@ -296,68 +280,68 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
             border: '2px solid #2d6e2d',
             borderRadius: '6px',
-            padding: '10px 16px',
-            marginBottom: '10px',
+            padding: '8px 14px',
+            marginBottom: '8px',
           }}>
             <p dir="rtl" style={{
-              color: '#1a5c1a', fontSize: '10px', fontFamily: 'Cairo, sans-serif',
-              marginBottom: '4px', letterSpacing: '1px', fontWeight: '600',
+              color: '#1a5c1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif',
+              marginBottom: '3px', letterSpacing: '1px', fontWeight: '600',
             }}>
               يتشرّف بحضوركم الكريم
             </p>
             <p style={{
-              color: '#1a1a1a', fontSize: '20px', fontWeight: 'bold',
-              fontFamily: 'Cairo, sans-serif', lineHeight: 1.3,
+              color: '#1a1a1a', fontSize: '17px', fontWeight: 'bold',
+              fontFamily: 'Cairo, sans-serif', lineHeight: 1.2,
               wordBreak: 'break-word',
             }}>
               {attendee.full_name}
             </p>
             <p style={{
-              color: '#666', fontSize: '10px', fontFamily: 'monospace',
-              marginTop: '4px', letterSpacing: '1px',
+              color: '#666', fontSize: '9px', fontFamily: 'monospace',
+              marginTop: '3px', letterSpacing: '1px',
             }}>
               {attendee.registration_number}
             </p>
           </div>
 
           {/* Opening / Closing columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '10px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
             <div style={{
               background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
               border: '1px solid #2d6e2d', borderRadius: '6px',
-              padding: '8px 10px', textAlign: 'center',
+              padding: '6px 8px', textAlign: 'center',
             }}>
               <div style={{
                 background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '11px',
-                fontWeight: 'bold', padding: '3px 10px', borderRadius: '4px',
-                marginBottom: '6px', display: 'inline-block',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+                fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
+                marginBottom: '4px', display: 'inline-block',
               }}>
                 الافتتاح
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '10px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.7 }}>
+              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5 }}>
                 الساعة الثامنة صباحاً<br />
                 {dateStart}<br />
-                <span style={{ color: '#555', fontSize: '9px' }}>{confLocation}</span>
+                <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
               </p>
             </div>
             <div style={{
               background: 'linear-gradient(135deg, #fffde7, #fff8e1)',
               border: '1px solid #c9a84c', borderRadius: '6px',
-              padding: '8px 10px', textAlign: 'center',
+              padding: '6px 8px', textAlign: 'center',
             }}>
               <div style={{
                 background: 'linear-gradient(90deg, #c9a84c, #f0d080)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '11px',
-                fontWeight: 'bold', padding: '3px 10px', borderRadius: '4px',
-                marginBottom: '6px', display: 'inline-block',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+                fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
+                marginBottom: '4px', display: 'inline-block',
               }}>
                 الأمسية الختامية الكبرى
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '10px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.7 }}>
+              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5 }}>
                 الساعة السابعة مساءً<br />
                 {dateEnd}<br />
-                <span style={{ color: '#555', fontSize: '9px' }}>{confLocation}</span>
+                <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
               </p>
             </div>
           </div>

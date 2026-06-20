@@ -248,7 +248,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               overflow: 'hidden',
               backgroundImage: 'url(/green-dome.jpeg)',
               backgroundSize: 'cover',
-              backgroundPosition: 'center 5%',
+              backgroundPosition: 'center 30%',
               backgroundRepeat: 'no-repeat',
               imageRendering: 'high-quality' as any,
             }} />

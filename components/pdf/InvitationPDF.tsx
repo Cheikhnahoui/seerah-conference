@@ -130,6 +130,13 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     fontSize: 9.5,
     color: '#333333',
+    lineHeight: 1.6,
+  },
+  inviteLineLast: {
+    ...RTL,
+    textAlign: 'center',
+    fontSize: 9.5,
+    color: '#333333',
     marginBottom: 12,
     lineHeight: 1.6,
   },
@@ -164,6 +171,7 @@ const styles = StyleSheet.create({
   },
 
   columnsRow: {
+    ...RTL,
     flexDirection: 'row',
     gap: 8,
     marginBottom: 14,
@@ -213,11 +221,15 @@ const styles = StyleSheet.create({
     fontSize: 9,
     color: '#1a1a1a',
     textAlign: 'center',
-    lineHeight: 1.8,
+    lineHeight: 1.6,
+    marginBottom: 2,
   },
   columnSubText: {
+    ...RTL,
     fontSize: 8,
     color: '#555555',
+    textAlign: 'center',
+    marginTop: 2,
   },
 
   qrRow: {
@@ -337,9 +349,8 @@ export function InvitationPDF({
           {/* Bottom section */}
           <View style={styles.bottomSection}>
             <Text style={styles.patronLine}>تحت الرعاية السامية لفخامة رئيس الجمهورية السيد محمد ولد الشيخ الغزواني</Text>
-            <Text style={styles.inviteLine}>
-              يتشرف فضيلة الشيخ محمد الحافظ النحوي رئيس التجمع الثقافي الإسلامي بدعوتكم{'\n'}لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ38 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم
-            </Text>
+            <Text style={styles.inviteLine}>يتشرف فضيلة الشيخ محمد الحافظ النحوي رئيس التجمع الثقافي الإسلامي بدعوتكم</Text>
+            <Text style={styles.inviteLineLast}>لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ39 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم</Text>
 
             <View style={styles.attendeeBox}>
               <Text style={styles.attendeeLabel}>يتشرّف بحضوركم الكريم</Text>
@@ -350,19 +361,15 @@ export function InvitationPDF({
             <View style={styles.columnsRow}>
               <View style={[styles.column, styles.columnOpen]}>
                 <Text style={styles.columnBadgeOpen}>الافتتاح</Text>
-                <Text style={styles.columnText}>
-                  الساعة الثامنة صباحاً{'\n'}
-                  {dateStart}{'\n'}
-                  <Text style={styles.columnSubText}>{confLocation}</Text>
-                </Text>
+                <Text style={styles.columnText}>الساعة الثامنة صباحاً</Text>
+                <Text style={styles.columnText}>{dateStart}</Text>
+                <Text style={styles.columnSubText}>{confLocation}</Text>
               </View>
               <View style={[styles.column, styles.columnClose]}>
                 <Text style={styles.columnBadgeClose}>الأمسية الختامية الكبرى</Text>
-                <Text style={styles.columnText}>
-                  الساعة السابعة مساءً{'\n'}
-                  {dateEnd}{'\n'}
-                  <Text style={styles.columnSubText}>{confLocation}</Text>
-                </Text>
+                <Text style={styles.columnText}>الساعة السابعة مساءً</Text>
+                <Text style={styles.columnText}>{dateEnd}</Text>
+                <Text style={styles.columnSubText}>{confLocation}</Text>
               </View>
             </View>
 

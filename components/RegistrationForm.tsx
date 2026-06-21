@@ -194,8 +194,8 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
         </button>
       </form>
 
-      <p className="text-center text-xs mt-6" style={{ color: '#888888' }}>
-        بالتسجيل، أنت توافق على شروط وأحكام المؤتمر
+      <p className="text-center text-xs mt-6" style={{ color: '#888888', fontFamily: 'Cairo, sans-serif', lineHeight: '1.8' }}>
+        معًا لنصرة الحبيب المصطفى ﷺ، وترسيخ محبته في القلوب، ونصرة الأشقاء في فلسطين
       </p>
     </div>
   );

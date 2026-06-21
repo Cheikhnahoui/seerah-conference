@@ -211,6 +211,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           }} />
 
           {/* === THREE IMAGES BANNER === */}
+          {/* DOM order matches visual order explicitly (left-to-right) instead of
+              relying on RTL flex-direction reversal, because html2canvas does not
+              always respect inherited `direction: rtl` when capturing flex layouts. */}
           <div style={{
             display: 'flex',
             gap: '8px',
@@ -218,6 +221,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             height: '140px',
             background: '#1a5c2a',
             borderBottom: '2px solid #c9a84c',
+            direction: 'ltr',
           }}>
             {/* Left: Dome of the Rock */}
             <div style={{
@@ -285,7 +289,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           }}>
             <p dir="rtl" style={{
               color: '#1a5c1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif',
-              marginBottom: '3px', letterSpacing: '1px', fontWeight: '600',
+              marginBottom: '3px', fontWeight: '600',
             }}>
               يتشرّف بحضوركم الكريم
             </p>
@@ -305,26 +309,10 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           </div>
 
           {/* Opening / Closing columns */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px' }}>
-            <div style={{
-              background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
-              border: '1px solid #2d6e2d', borderRadius: '6px',
-              padding: '6px 8px', textAlign: 'center',
-            }}>
-              <div style={{
-                background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
-                fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
-                marginBottom: '4px', display: 'inline-block',
-              }}>
-                الافتتاح
-              </div>
-              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
-                الساعة الثامنة صباحاً<br />
-                {dateStart}<br />
-                <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
-              </p>
-            </div>
+          {/* DOM order matches visual order explicitly (Opening on the right via
+              LTR layout: Closing first in DOM, Opening second) instead of relying
+              on RTL grid reversal, for the same html2canvas reliability reason. */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px', direction: 'ltr' }}>
             <div style={{
               background: 'linear-gradient(135deg, #fffde7, #fff8e1)',
               border: '1px solid #c9a84c', borderRadius: '6px',
@@ -338,9 +326,28 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               }}>
                 الأمسية الختامية الكبرى
               </div>
-              <p style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
+              <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
                 الساعة السابعة مساءً<br />
                 {dateEnd}<br />
+                <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
+              </p>
+            </div>
+            <div style={{
+              background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
+              border: '1px solid #2d6e2d', borderRadius: '6px',
+              padding: '6px 8px', textAlign: 'center',
+            }}>
+              <div style={{
+                background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+                fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
+                marginBottom: '4px', display: 'inline-block',
+              }}>
+                الافتتاح
+              </div>
+              <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
+                الساعة الثامنة صباحاً<br />
+                {dateStart}<br />
                 <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
               </p>
             </div>
@@ -378,7 +385,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d, #1a5c1a)',
           padding: '8px 16px', textAlign: 'center',
           color: '#fff', fontSize: '11px',
-          fontFamily: 'Amiri, serif', letterSpacing: '0.5px', lineHeight: 1.6,
+          fontFamily: 'Amiri, serif', lineHeight: 1.6,
         }}>
           ❝ معًا لنصرة الحبيب المصطفى ﷺ، وترسيخ محبته في القلوب، ونصرة الأشقاء في فلسطين ❞
         </div>

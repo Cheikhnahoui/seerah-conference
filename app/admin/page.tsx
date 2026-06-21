@@ -69,7 +69,7 @@ export default function AdminLoginPage() {
                 type="email"
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                placeholder="admin@seerah-conf.com"
+                placeholder="أدخل البريد الإلكتروني"
                 className="input-islamic w-full px-4 py-3 rounded-xl text-sm"
                 required
               />

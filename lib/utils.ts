@@ -47,6 +47,7 @@ export function formatDate(dateString: string): string {
     return new Intl.DateTimeFormat('ar-SA', {
       year: 'numeric', month: 'long', day: 'numeric',
       hour: '2-digit', minute: '2-digit',
+      timeZone: 'Africa/Nouakchott',
     }).format(date);
   } catch { return dateString; }
 }
@@ -56,6 +57,7 @@ export function formatDateShort(dateString: string): string {
     const date = new Date(dateString);
     return new Intl.DateTimeFormat('ar-SA', {
       year: 'numeric', month: 'short', day: 'numeric',
+      timeZone: 'Africa/Nouakchott',
     }).format(date);
   } catch { return dateString; }
 }

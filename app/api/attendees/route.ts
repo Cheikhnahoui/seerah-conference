@@ -2,42 +2,41 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber } from '@/lib/utils';
 import { AttendeeFormData } from '@/types';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
-// FIX 3: In-memory rate limiter — max 3 registrations per IP per 10 minutes
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const windowMs = 10 * 60 * 1000; // 10 minutes
-  const maxRequests = 3;
-
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
-    return true;
-  }
-  if (entry.count >= maxRequests) return false;
-  entry.count++;
-  return true;
-}
-
-// Clean up old entries every hour
-setInterval(() => {
-  const now = Date.now();
-  rateLimitMap.forEach((v, k) => { if (now > v.resetAt) rateLimitMap.delete(k); });
-}, 60 * 60 * 1000);
+// Registration rate limit: max 3 registrations per IP per 10 minutes
+const registrationRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.fixedWindow(3, '10m'),
+  prefix: 'ratelimit:registration',
+});
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit by IP
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      || request.headers.get('x-real-ip')
-      || 'unknown';
+    // Get IP address
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
 
-    if (!checkRateLimit(ip)) {
+    // Check rate limit
+    const { success, remaining, reset } = await registrationRatelimit.limit(ip);
+
+    if (!success) {
+      const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
       return NextResponse.json(
-        { success: false, error: 'لقد تجاوزت الحد المسموح به. يرجى الانتظار 10 دقائق قبل المحاولة مجدداً.' },
-        { status: 429 }
+        {
+          success: false,
+          error: 'لقد تجاوزت الحد المسموح به. يرجى الانتظار 10 دقائق قبل المحاولة مجدداً.',
+        },
+        {
+          status: 429,
+          headers: {
+            'Retry-After': String(retryAfterSeconds),
+            'X-RateLimit-Remaining': String(remaining),
+          },
+        }
       );
     }
 
@@ -62,7 +61,10 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       return NextResponse.json(
-        { success: false, error: 'رقم الهاتف مسجل مسبقاً. يمكنك استرجاع دعوتك من صفحة الاسترجاع.' },
+        {
+          success: false,
+          error: 'رقم الهاتف مسجل مسبقاً. يمكنك استرجاع دعوتك من صفحة الاسترجاع.',
+        },
         { status: 409 }
       );
     }
@@ -114,12 +116,17 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('attendees')
-      .select('id, registration_number, full_name, phone_number, city, attendance_status, registration_date, attendance_date, created_at', { count: 'exact' })
+      .select(
+        'id, registration_number, full_name, phone_number, city, attendance_status, registration_date, attendance_date, created_at',
+        { count: 'exact' }
+      )
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 
     if (search) {
-      query = query.or(`full_name.ilike.%${search}%,phone_number.ilike.%${search}%,registration_number.ilike.%${search}%`);
+      query = query.or(
+        `full_name.ilike.%${search}%,phone_number.ilike.%${search}%,registration_number.ilike.%${search}%`
+      );
     }
     if (city) {
       query = query.ilike('city', `%${city}%`);

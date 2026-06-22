@@ -356,7 +356,7 @@ export function InvitationPDF({
           <View style={styles.bottomSection}>
             <Text style={styles.patronLine}>تحت الرعاية السامية لفخامة رئيس الجمهورية السيد محمد ولد الشيخ الغزواني</Text>
             <Text style={styles.inviteLine}>يتشرف فضيلة الشيخ محمد الحافظ النحوي رئيس التجمع الثقافي الإسلامي بدعوتكم</Text>
-            <Text style={styles.inviteLineLast}>لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ38 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم</Text>
+            <Text style={styles.inviteLineLast}>لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ39 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم</Text>
 
             <View style={styles.attendeeBox}>
               <Text style={styles.attendeeLabel}>يتشرّف بحضوركم الكريم</Text>

@@ -275,7 +275,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             fontFamily: 'Cairo, sans-serif', marginBottom: '10px', lineHeight: 1.8,
           }}>
             يتشرف فضيلة الشيخ محمد الحافظ النحوي رئيس التجمع الثقافي الإسلامي بدعوتكم
-            <br />لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ38 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم
+            <br />لحضور حفلي افتتاح و اختتام المؤتمر السنوي الدولي الـ39 لسيرة و نصرة الحبيب المصطفى صلى الله عليه و سلم
           </p>
 
           {/* Attendee name */}
@@ -318,15 +318,16 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               border: '1px solid #c9a84c', borderRadius: '6px',
               padding: '6px 8px', textAlign: 'center',
             }}>
-              <div style={{
-                background: 'linear-gradient(90deg, #c9a84c, #f0d080)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
-                fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
-                marginBottom: '4px', display: 'inline-block',
-              }}>
-                الأمسية الختامية الكبرى
-              </div>
-              <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
+            <div style={{
+              background: 'linear-gradient(90deg, #c9a84c, #f0d080)',
+              color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+              fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px 4px 0 0',
+              marginBottom: '8px', display: 'block', textAlign: 'center',
+              margin: '-6px -8px 8px -8px',
+            }}>
+              الأمسية الختامية الكبرى
+            </div>
+            <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
                 الساعة السابعة مساءً<br />
                 {dateEnd}<br />
                 <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
@@ -337,15 +338,16 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               border: '1px solid #2d6e2d', borderRadius: '6px',
               padding: '6px 8px', textAlign: 'center',
             }}>
-              <div style={{
-                background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
-                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
-                fontWeight: 'bold', padding: '2px 8px', borderRadius: '4px',
-                marginBottom: '4px', display: 'inline-block',
-              }}>
-                الافتتاح
-              </div>
-              <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
+            <div style={{
+              background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
+              color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+              fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px 4px 0 0',
+              display: 'block', textAlign: 'center',
+              margin: '-6px -8px 8px -8px',
+            }}>
+              الافتتاح
+            </div>
+            <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
                 الساعة الثامنة صباحاً<br />
                 {dateStart}<br />
                 <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>

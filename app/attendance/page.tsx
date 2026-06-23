@@ -154,7 +154,7 @@ export default function AttendancePage() {
             <form onSubmit={handleLogin} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>البريد الإلكتروني</label>
-                <input type="email" placeholder="admin@seerah-conf.com"
+                <input type="email" placeholder="البريد الإلكتروني"
                   value={loginForm.email}
                   onChange={(e) => setLoginForm({ ...loginForm, email: e.target.value })}
                   className="input-islamic w-full px-4 py-3 rounded-xl"

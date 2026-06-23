@@ -139,7 +139,7 @@ export default function AttendeesPage() {
       ) : (
         <>
           {/* MOBILE: Cards view */}
-          <div className="block md:hidden space-y-3 mb-6">
+          <div className="hidden space-y-3 mb-6">
             {attendees.map((a) => (
               <div key={a.id} className="glass rounded-2xl p-4" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
                 {editingId === a.id ? (
@@ -189,7 +189,7 @@ export default function AttendeesPage() {
           </div>
 
           {/* DESKTOP: Table view */}
-          <div className="hidden md:block glass rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
+          <div className="block glass rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
             <div className="overflow-x-auto">
               <table className="w-full table-islamic">
                 <thead>

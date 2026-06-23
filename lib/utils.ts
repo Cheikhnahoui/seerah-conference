@@ -44,10 +44,10 @@ export function validateName(name: string): boolean {
 export function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ar-SA', {
+    return new Intl.DateTimeFormat('ar-MA', {
+      calendar: 'gregory',
       year: 'numeric', month: 'long', day: 'numeric',
       hour: '2-digit', minute: '2-digit',
-      timeZone: 'Africa/Nouakchott',
     }).format(date);
   } catch { return dateString; }
 }
@@ -55,9 +55,9 @@ export function formatDate(dateString: string): string {
 export function formatDateShort(dateString: string): string {
   try {
     const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ar-SA', {
+    return new Intl.DateTimeFormat('ar-MA', {
+      calendar: 'gregory',
       year: 'numeric', month: 'short', day: 'numeric',
-      timeZone: 'Africa/Nouakchott',
     }).format(date);
   } catch { return dateString; }
 }
@@ -128,15 +128,4 @@ export function verifyAdminToken(token: string | null): boolean {
 
     return true;
   } catch { return false; }
-}
-
-// FIX 4: Remove broken re-export — inline the functions instead
-export function validateMauritanianPhone(phone: string): boolean {
-  const cleaned = phone.replace(/\D/g, '');
-  return cleaned.length >= 8 && cleaned.length <= 10;
-}
-
-export function formatMauritanianPhone(phone: string): string {
-  const cleaned = phone.replace(/\D/g, '');
-  return cleaned.startsWith('222') ? cleaned : `222${cleaned}`;
 }

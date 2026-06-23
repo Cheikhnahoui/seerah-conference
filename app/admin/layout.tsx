@@ -28,7 +28,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/dashboard', label: 'الإحصائيات', icon: '📊' },
     { href: '/admin/attendees', label: 'المشاركون', icon: '👥' },
     { href: '/admin/settings', label: 'إعدادات المؤتمر', icon: '⚙️' },
-    { href: '/admin/attendance', label: 'مسح QR', icon: '📷' },
+    { href: '/attendance', label: 'مسح QR', icon: '📷' },
   ];
 
   return (

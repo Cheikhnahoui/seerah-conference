@@ -389,7 +389,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           color: '#fff', fontSize: '11px',
           fontFamily: 'Amiri, serif', lineHeight: 1.6,
         }}>
-          ❝ معًا لنصرة الحبيب المصطفى ﷺ، وترسيخ محبته في القلوب، ونصرة الأشقاء في فلسطين ❞
+          معًا لنصرة الحبيب المصطفى ﷺ، وترسيخ محبته في القلوب، ونصرة الأشقاء في فلسطين
         </div>
 
         {/* Bottom gold bar */}

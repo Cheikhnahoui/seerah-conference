@@ -85,7 +85,6 @@ export default function AttendancePage() {
       }
 
       setResult(data);
-      setTimeout(() => setResult(null), 6000);
     } catch {
       setResult({ success: false, message: 'خطأ في الاتصال بالخادم' });
     } finally {
@@ -208,7 +207,18 @@ export default function AttendancePage() {
             style={{
               background: result.success ? 'rgba(26,92,42,0.1)' : result.alreadyAttended ? 'rgba(184,134,11,0.1)' : 'rgba(220,38,38,0.1)',
               border: `1px solid ${result.success ? 'rgba(26,92,42,0.3)' : result.alreadyAttended ? 'rgba(184,134,11,0.3)' : 'rgba(220,38,38,0.3)'}`,
+              position: 'relative',
             }}>
+            <button
+              onClick={() => setResult(null)}
+              style={{
+                position: 'absolute', top: '10px', left: '10px',
+                background: 'rgba(0,0,0,0.1)', border: 'none', borderRadius: '50%',
+                width: '28px', height: '28px', cursor: 'pointer',
+                fontSize: '14px', color: '#555', lineHeight: '28px',
+              }}>
+              ✕
+            </button>
             <div className="text-4xl mb-2">
               {result.success ? '✅' : result.alreadyAttended ? '⚠️' : '❌'}
             </div>

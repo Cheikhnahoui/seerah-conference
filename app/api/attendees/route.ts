@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
     let query = supabase
       .from('attendees')
       .select(
-        'id, registration_number, full_name, phone_number, city, attendance_status, registration_date, attendance_date, created_at',
+        'id, registration_number, full_name, phone_number, city, occupation, attendance_status, registration_date, attendance_date, created_at',
         { count: 'exact' }
       )
       .order('created_at', { ascending: false })

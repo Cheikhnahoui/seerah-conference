@@ -1,9 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
+import { verifyAdminToken } from '@/lib/utils';
 
 export async function GET(request: NextRequest) {
   try {
-    // FIX: Remove token check — dashboard sends no token, stats are not sensitive
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 });
+    }
     const supabase = createServerSupabase();
 
     const { count: totalRegistered } = await supabase

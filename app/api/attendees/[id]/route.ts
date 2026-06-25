@@ -7,6 +7,11 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 });
+    }
     const { id } = await params;
     const supabase = createServerSupabase();
     const { data, error } = await supabase

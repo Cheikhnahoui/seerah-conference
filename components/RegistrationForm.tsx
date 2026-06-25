@@ -145,17 +145,15 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
             المدينة / الولاية <span style={{ color: '#888888', fontSize: '0.75rem' }}>(اختياري)</span>
           </label>
-          <select
+          <input
+            type="text"
             value={formData.city}
             onChange={(e) => setFormData({ ...formData, city: e.target.value })}
+            placeholder="أدخل مدينتك أو ولايتك..."
             className="input-islamic w-full px-4 py-3 rounded-xl text-base"
             style={{ fontFamily: 'Cairo, sans-serif', color: '#1a1a1a' }}
-            disabled={loading}>
-            <option value="">اختر مدينتك...</option>
-            {MAURITANIA_CONFIG.cities.map((city) => (
-              <option key={city} value={city}>{city}</option>
-            ))}
-          </select>
+            disabled={loading}
+          />
         </div>
 
         {/* Occupation */}

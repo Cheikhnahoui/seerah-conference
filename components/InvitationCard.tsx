@@ -228,12 +228,11 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               flex: 1,
               borderRadius: '10px',
               overflow: 'hidden',
-              backgroundImage: 'url(/dome.jpeg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center 30%',
-              backgroundRepeat: 'no-repeat',
-              imageRendering: 'high-quality' as any,
-            }} />
+              position: 'relative',
+            }}>
+              <img src="/dome.jpeg" alt="dome"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
+            </div>
             {/* Center: GCI Logo */}
             <div style={{
               flexShrink: 0,
@@ -250,12 +249,11 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               flex: 1,
               borderRadius: '10px',
               overflow: 'hidden',
-              backgroundImage: 'url(/green-dome.jpeg)',
-              backgroundSize: 'cover',
-              backgroundPosition: 'center 30%',
-              backgroundRepeat: 'no-repeat',
-              imageRendering: 'high-quality' as any,
-            }} />
+              position: 'relative',
+            }}>
+              <img src="/green-dome.jpeg" alt="green dome"
+                style={{ width: '100%', height: '100%', objectFit: 'cover', objectPosition: 'center 30%', display: 'block' }} />
+            </div>
           </div>
         </div>
 

@@ -74,7 +74,7 @@ export default function DashboardPage() {
         <img
           src="/conference-photo.jpeg"
           alt="المؤتمر الدولي للسيرة النبوية"
-          style={{ width: '100%', height: '360px', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+          style={{ width: '100%', height: '360px', objectFit: 'cover', objectPosition: 'center 20%', display: 'block' }}
         />
       </div>
     </div>

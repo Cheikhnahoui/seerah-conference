@@ -191,7 +191,7 @@ export default function AttendeesPage() {
           {/* DESKTOP: Table view */}
           <div className="block glass rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
             <div className="overflow-x-auto">
-              <table className="w-full table-islamic">
+              <table className="w-full table-islamic" style={{ minWidth: '800px' }}>
                 <thead>
                   <tr>
                     <th>رقم التسجيل</th>

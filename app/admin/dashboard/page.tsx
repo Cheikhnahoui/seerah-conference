@@ -67,6 +67,8 @@ export default function DashboardPage() {
           <span>{stats?.attendance_rate}%</span>
           <span>{stats?.total_registered} مسجل</span>
         </div>
+      </div>
+
       {/* Conference Photo */}
       <div className="glass rounded-2xl overflow-hidden mt-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
         <img

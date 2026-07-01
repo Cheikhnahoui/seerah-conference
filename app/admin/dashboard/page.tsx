@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from 'react';
 import { Stats } from '@/types';
-import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell } from 'recharts';
 
 export default function DashboardPage() {
   const [stats, setStats] = useState<Stats | null>(null);
@@ -37,8 +36,6 @@ export default function DashboardPage() {
     );
   }
 
-  const COLORS = ['#c9a84c', '#2d7a5f', '#1a5c4a', '#9a7a30', '#3d9e7a'];
-
   return (
     <div className="p-4 md:p-8">
       <div className="mb-8">
@@ -59,7 +56,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Attendance bar */}
-      <div className="glass rounded-2xl p-6 mb-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
+      <div className="glass rounded-2xl p-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
         <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--color-gold)' }}>نسبة الحضور</h2>
         <div className="relative h-6 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div className="h-full rounded-full transition-all duration-1000"
@@ -71,60 +68,6 @@ export default function DashboardPage() {
           <span>{stats?.total_registered} مسجل</span>
         </div>
       </div>
-
-      {/* City chart */}
-      {stats?.by_city && stats.by_city.length > 0 ? (
-        <div className="glass rounded-2xl p-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
-          <h2 className="text-base font-semibold mb-6" style={{ color: 'var(--color-gold)' }}>الحضور حسب المدن</h2>
-          <div className="h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={stats.by_city} layout="vertical" margin={{ top: 0, right: 20, left: 60, bottom: 0 }}>
-                <XAxis type="number" tick={{ fill: '#444444', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis type="category" dataKey="city" tick={{ fill: '#1a1a1a', fontSize: 12, fontFamily: 'Cairo, sans-serif' }} axisLine={false} tickLine={false} width={90} />
-                <Tooltip
-                  contentStyle={{ background: '#0d2137', border: '1px solid rgba(201,168,76,0.3)', borderRadius: '8px', color: '#1a1a1a', fontFamily: 'Cairo, sans-serif' }}
-                  formatter={(value, name) => [value, name === 'count' ? 'المسجلون' : 'الحاضرون']}
-                />
-                <Bar dataKey="count" radius={[0, 4, 4, 0]}>
-                  {stats.by_city.map((_, index) => (
-                    <Cell key={index} fill={COLORS[index % COLORS.length]} fillOpacity={0.8} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* City table */}
-          <div className="mt-6 overflow-x-auto">
-            <table className="w-full table-islamic">
-              <thead>
-                <tr>
-                  <th>المدينة</th>
-                  <th>المسجلون</th>
-                  <th>الحاضرون</th>
-                  <th>النسبة</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stats.by_city.map((c, i) => (
-                  <tr key={i}>
-                    <td className="font-medium">{c.city}</td>
-                    <td>{c.count}</td>
-                    <td>{c.attended}</td>
-                    <td>{c.count > 0 ? Math.round((c.attended / c.count) * 100) : 0}%</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      ) : (
-        <div className="glass rounded-2xl p-12 text-center" style={{ border: '1px solid rgba(201, 168, 76, 0.1)' }}>
-          <p className="text-4xl mb-4">📊</p>
-          <p style={{ color: '#444444' }}>لا توجد بيانات بعد</p>
-          <p className="text-sm mt-2" style={{ color: '#666666' }}>ستظهر الإحصائيات عند بدء التسجيل</p>
-        </div>
-      )}
     </div>
   );
 }

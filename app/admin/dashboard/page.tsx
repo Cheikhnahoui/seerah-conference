@@ -67,6 +67,13 @@ export default function DashboardPage() {
           <span>{stats?.attendance_rate}%</span>
           <span>{stats?.total_registered} مسجل</span>
         </div>
+      {/* Conference Photo */}
+      <div className="glass rounded-2xl overflow-hidden mt-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
+        <img
+          src="/conference-photo.jpeg"
+          alt="المؤتمر الدولي للسيرة النبوية"
+          style={{ width: '100%', height: '360px', objectFit: 'cover', objectPosition: 'center top', display: 'block' }}
+        />
       </div>
     </div>
   );

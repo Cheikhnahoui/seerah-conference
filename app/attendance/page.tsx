@@ -23,6 +23,9 @@ export default function AttendancePage() {
   const [processing, setProcessing] = useState(false);
   const scannerRef = useRef<HTMLDivElement>(null);
   const html5QrRef = useRef<unknown>(null);
+  const lastScannedRef = useRef<string>('');
+  const lastScannedTimeRef = useRef<number>(0);
+  const processingRef = useRef<boolean>(false);
 
   // FIX 1: Check token validity on every page load via API
   useEffect(() => {
@@ -63,8 +66,19 @@ export default function AttendancePage() {
   };
 
   const processQR = async (qrData: string) => {
-    if (processing) return;
+    const now = Date.now();
+    const cooldown = 5000; // 5 seconds before same QR can be scanned again
+
+    // Block if: already processing, same QR within cooldown period
+    if (processingRef.current) return;
+    if (qrData === lastScannedRef.current && now - lastScannedTimeRef.current < cooldown) return;
+
+    // Lock immediately using ref (not state) to prevent race between renders
+    processingRef.current = true;
+    lastScannedRef.current = qrData;
+    lastScannedTimeRef.current = now;
     setProcessing(true);
+
     try {
       const token = localStorage.getItem('attendance_token');
       const response = await fetch('/api/attendance', {
@@ -77,7 +91,6 @@ export default function AttendancePage() {
       });
       const data = await response.json();
 
-      // FIX 1: If token expired, force re-login
       if (response.status === 401) {
         localStorage.removeItem('attendance_token');
         setAuthenticated(false);
@@ -88,6 +101,7 @@ export default function AttendancePage() {
     } catch {
       setResult({ success: false, message: 'خطأ في الاتصال بالخادم' });
     } finally {
+      processingRef.current = false;
       setProcessing(false);
     }
   };

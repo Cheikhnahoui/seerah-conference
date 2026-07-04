@@ -48,10 +48,10 @@ export async function POST(request: NextRequest) {
     // Already attended
     if (attendee.attendance_status === 'attended') {
       return NextResponse.json({
-        success: true,
+        success: false,
         alreadyAttended: true,
         attendee,
-        message: `تم تسجيل حضور ${attendee.full_name} بنجاح ✓`,
+        message: `تم تسجيل حضور ${attendee.full_name} مسبقاً`,
       });
     }
 

@@ -33,10 +33,21 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     return Object.keys(newErrors).length === 0;
   };
 
+  const handleNameChange = (value: string) => {
+    // Block any digits — only allow letters and spaces
+    const lettersOnly = value.replace(/[0-9]/g, '');
+    setFormData({ ...formData, full_name: lettersOnly });
+  };
+
   const handlePhoneChange = (value: string) => {
-    const cleaned = value.replace(/[^\d+\s\-]/g, '');
-    setPhoneLocal(cleaned);
-    setFormData({ ...formData, phone_number: formatMauritanianPhone(cleaned) });
+    // Only allow digits
+    const digitsOnly = value.replace(/[^\d]/g, '');
+    // First digit must be 2, 3, or 4
+    if (digitsOnly.length > 0 && !['2', '3', '4'].includes(digitsOnly[0])) {
+      return; // Block invalid first digit
+    }
+    setPhoneLocal(digitsOnly);
+    setFormData({ ...formData, phone_number: formatMauritanianPhone(digitsOnly) });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,7 +104,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <input
             type="text"
             value={formData.full_name}
-            onChange={(e) => setFormData({ ...formData, full_name: e.target.value })}
+            onChange={(e) => handleNameChange(e.target.value)}
             placeholder="أدخل اسمك الكامل"
             className="input-islamic w-full px-4 py-3 rounded-xl text-base"
             style={{ fontFamily: 'Cairo, sans-serif', color: '#1a1a1a' }}
@@ -119,7 +130,7 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
               dir="ltr"
               style={{ textAlign: 'left', fontFamily: 'monospace', letterSpacing: '0.05em', color: '#1a1a1a' }}
               disabled={loading}
-              maxLength={12}
+              maxLength={8}
             />
             <div className="flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-bold flex-shrink-0"
               style={{

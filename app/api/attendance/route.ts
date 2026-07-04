@@ -34,7 +34,36 @@ export async function POST(request: NextRequest) {
 
     const supabase = createServerSupabase();
 
-    // Find attendee by registration number
+    // ATOMIC UPDATE: only update if status is still 'registered'
+    // This prevents race conditions — two simultaneous scans can't both succeed
+    const { data: updated, error: updateError } = await supabase
+      .from('attendees')
+      .update({
+        attendance_status: 'attended',
+        attendance_date: new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('registration_number', registrationNumber)
+      .eq('attendance_status', 'registered') // Only update if NOT already attended
+      .select()
+      .maybeSingle();
+
+    if (updateError) {
+      console.error('Update error:', updateError);
+      return NextResponse.json({ success: false, message: 'خطأ في تسجيل الحضور' }, { status: 500 });
+    }
+
+    // If update returned data → first time attendance
+    if (updated) {
+      return NextResponse.json({
+        success: true,
+        attendee: updated,
+        message: `مرحباً ${updated.full_name}! تم تسجيل حضورك بنجاح ✓`,
+      });
+    }
+
+    // No rows updated → either already attended or not found
+    // Fetch to determine which case
     const { data: attendee, error: findError } = await supabase
       .from('attendees')
       .select('*')
@@ -46,36 +75,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Already attended
-    if (attendee.attendance_status === 'attended') {
-      return NextResponse.json({
-        success: false,
-        alreadyAttended: true,
-        attendee,
-        message: `تم تسجيل حضور ${attendee.full_name} مسبقاً`,
-      });
-    }
-
-    // Mark as attended
-    const { data: updated, error: updateError } = await supabase
-      .from('attendees')
-      .update({
-        attendance_status: 'attended',
-        attendance_date: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-      })
-      .eq('id', attendee.id)
-      .select()
-      .single();
-
-    if (updateError) {
-      console.error('Update error:', updateError);
-      return NextResponse.json({ success: false, message: 'خطأ في تسجيل الحضور' }, { status: 500 });
-    }
-
     return NextResponse.json({
-      success: true,
-      attendee: updated,
-      message: `مرحباً ${updated.full_name}! تم تسجيل حضورك بنجاح ✓`,
+      success: false,
+      alreadyAttended: true,
+      attendee,
+      message: `تم تسجيل حضور ${attendee.full_name} مسبقاً`,
     });
   } catch (error) {
     console.error('Attendance error:', error);

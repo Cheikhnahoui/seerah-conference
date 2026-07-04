@@ -3,10 +3,10 @@ import { createAdminToken } from '@/lib/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Brute force protection: max 5 attempts per IP per 15 minutes
+// Brute force protection: max 3 attempts per IP+email per 10 minutes
 const authRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
-  limiter: Ratelimit.fixedWindow(5, '15m'),
+  limiter: Ratelimit.fixedWindow(3, '10m'),
   prefix: 'ratelimit:auth',
 });
 
@@ -18,8 +18,20 @@ export async function POST(request: NextRequest) {
       request.headers.get('x-real-ip') ||
       'unknown';
 
-    // Check brute force rate limit
-    const { success, remaining, reset } = await authRatelimit.limit(ip);
+    // Read body first to get email
+    const body = await request.json();
+    const { email, password } = body;
+
+    if (!email || !password) {
+      return NextResponse.json(
+        { success: false, error: 'البريد الإلكتروني وكلمة المرور مطلوبان' },
+        { status: 400 }
+      );
+    }
+
+    // Rate limit key = IP + email → each user blocked independently
+    const rateLimitKey = `${ip}:${email}`;
+    const { success, remaining, reset } = await authRatelimit.limit(rateLimitKey);
 
     if (!success) {
       const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
@@ -35,16 +47,6 @@ export async function POST(request: NextRequest) {
             'X-RateLimit-Remaining': String(remaining),
           },
         }
-      );
-    }
-
-    const body = await request.json();
-    const { email, password } = body;
-
-    if (!email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'البريد الإلكتروني وكلمة المرور مطلوبان' },
-        { status: 400 }
       );
     }
 

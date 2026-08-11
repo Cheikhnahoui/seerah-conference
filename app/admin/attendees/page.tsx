@@ -13,6 +13,8 @@ export default function AttendeesPage() {
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState({ full_name: '', phone_number: '', city: '', occupation: '' });
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDeleting, setBulkDeleting] = useState(false);
   const limit = 20;
 
   const getToken = () => localStorage.getItem('admin_token') || '';
@@ -43,6 +45,42 @@ export default function AttendeesPage() {
       headers: { Authorization: `Bearer ${getToken()}` },
     });
     if ((await response.json()).success) fetchAttendees();
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.size === 0) return;
+    if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} مشارك؟ لا يمكن التراجع عن هذا الإجراء.`)) return;
+    setBulkDeleting(true);
+    try {
+      await Promise.all(
+        Array.from(selectedIds).map((id) =>
+          fetch(`/api/attendees/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${getToken()}` },
+          })
+        )
+      );
+      setSelectedIds(new Set());
+      fetchAttendees();
+    } finally {
+      setBulkDeleting(false);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === attendees.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(attendees.map((a) => a.id)));
+    }
   };
 
   const startEdit = (a: Attendee) => {
@@ -93,6 +131,7 @@ export default function AttendeesPage() {
   };
 
   const totalPages = Math.ceil(total / limit);
+  const allSelected = attendees.length > 0 && selectedIds.size === attendees.length;
 
   return (
     <div className="p-4 md:p-8">
@@ -103,7 +142,14 @@ export default function AttendeesPage() {
           </h1>
           <p className="text-sm mt-1" style={{ color: '#333333' }}>إجمالي: {total} مشارك</p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 flex-wrap">
+          {selectedIds.size > 0 && (
+            <button onClick={handleBulkDelete} disabled={bulkDeleting}
+              className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
+              style={{ background: 'rgba(220, 38, 38, 0.15)', border: '1px solid rgba(220, 38, 38, 0.4)', color: '#dc2626' }}>
+              {bulkDeleting ? '...' : `🗑️ حذف المحدد (${selectedIds.size})`}
+            </button>
+          )}
           <button onClick={handleExportCSV} className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
             style={{ background: 'rgba(45, 122, 95, 0.2)', border: '1px solid rgba(45, 122, 95, 0.4)', color: '#6ee7b7' }}>
             📥 CSV
@@ -138,62 +184,16 @@ export default function AttendeesPage() {
         </div>
       ) : (
         <>
-          {/* MOBILE: Cards view */}
-          <div className="hidden space-y-3 mb-6">
-            {attendees.map((a) => (
-              <div key={a.id} className="glass rounded-2xl p-4" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
-                {editingId === a.id ? (
-                  <div className="space-y-2">
-                    <input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
-                      className="input-islamic px-3 py-2 rounded-lg text-sm w-full" placeholder="الاسم" />
-                    <input value={editForm.phone_number} onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
-                      className="input-islamic px-3 py-2 rounded-lg text-sm w-full" placeholder="الهاتف" dir="ltr" />
-                    <input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
-                      className="input-islamic px-3 py-2 rounded-lg text-sm w-full" placeholder="المدينة" />
-                    <input value={editForm.occupation} onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })}
-                      className="input-islamic px-3 py-2 rounded-lg text-sm w-full" placeholder="الصفة أو الوظيفة" />
-                    <div className="flex gap-2 pt-1">
-                      <button onClick={saveEdit} className="flex-1 py-2 rounded-lg text-sm font-medium"
-                        style={{ background: 'rgba(45, 122, 95, 0.3)', color: '#6ee7b7' }}>حفظ</button>
-                      <button onClick={() => setEditingId(null)} className="flex-1 py-2 rounded-lg text-sm"
-                        style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(240,230,208,0.5)' }}>إلغاء</button>
-                    </div>
-                  </div>
-                ) : (
-                  <>
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-bold text-base" style={{ color: '#1a1a1a' }}>{a.full_name}</p>
-                        <p className="text-xs mt-0.5 font-mono" style={{ color: 'rgba(201, 168, 76, 0.6)' }}>{a.registration_number}</p>
-                      </div>
-                      <span className={`px-2 py-1 rounded-full text-xs ${a.attendance_status === 'attended' ? 'badge-attended' : 'badge-registered'}`}>
-                        {a.attendance_status === 'attended' ? '✅ حاضر' : '🕐 مسجل'}
-                      </span>
-                    </div>
-                    <div className="space-y-1 text-sm mb-3">
-                      <p style={{ color: '#1a1a1a' }}>📱 <span dir="ltr">{a.phone_number.replace(/^222/, '')}</span></p>
-                      {a.city && <p style={{ color: '#1a1a1a' }}>📍 {a.city}</p>}
-                      {a.occupation && <p style={{ color: '#1a1a1a' }}>💼 {a.occupation}</p>}
-                      <p className="text-xs" style={{ color: '#333333' }}>📅 {formatDate(a.registration_date)}</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <button onClick={() => startEdit(a)} className="flex-1 py-1.5 rounded-lg text-xs"
-                        style={{ background: 'rgba(201, 168, 76, 0.15)', color: 'var(--color-gold)' }}>✏️ تعديل</button>
-                      <button onClick={() => handleDelete(a.id)} className="flex-1 py-1.5 rounded-lg text-xs"
-                        style={{ background: 'rgba(239, 68, 68, 0.15)', color: '#fca5a5' }}>🗑️ حذف</button>
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
-          </div>
-
           {/* DESKTOP: Table view */}
           <div className="block glass rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
             <div className="overflow-x-auto">
               <table className="w-full table-islamic" style={{ minWidth: '800px' }}>
                 <thead>
                   <tr>
+                    <th style={{ width: '40px' }}>
+                      <input type="checkbox" checked={allSelected} onChange={toggleSelectAll}
+                        style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                    </th>
                     <th>رقم التسجيل</th>
                     <th>الاسم</th>
                     <th>الهاتف</th>
@@ -206,9 +206,10 @@ export default function AttendeesPage() {
                 </thead>
                 <tbody>
                   {attendees.map((a) => (
-                    <tr key={a.id}>
+                    <tr key={a.id} style={{ background: selectedIds.has(a.id) ? 'rgba(220,38,38,0.05)' : undefined }}>
                       {editingId === a.id ? (
                         <>
+                          <td></td>
                           <td className="text-xs" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>{a.registration_number}</td>
                           <td><input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
@@ -230,6 +231,10 @@ export default function AttendeesPage() {
                         </>
                       ) : (
                         <>
+                          <td>
+                            <input type="checkbox" checked={selectedIds.has(a.id)} onChange={() => toggleSelect(a.id)}
+                              style={{ cursor: 'pointer', width: '16px', height: '16px' }} />
+                          </td>
                           <td className="text-xs font-mono" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>{a.registration_number}</td>
                           <td className="font-medium">{a.full_name}</td>
                           <td dir="ltr" className="text-right">{a.phone_number.replace(/^222/, '')}</td>

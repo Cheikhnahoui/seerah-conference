@@ -99,7 +99,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     import('qrcode').then(QRCode => {
       const qrData = JSON.stringify({ reg: attendee.registration_number, app: 'seerah-conf' });
       QRCode.toCanvas(qrCanvasRef.current, qrData, {
-        width: 90,
+        width: 120,
         margin: 1,
         color: { dark: '#1a4a1a', light: '#ffffff' },
         errorCorrectionLevel: 'H',
@@ -190,7 +190,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           borderRadius: '4px',
           overflow: 'hidden',
           boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
-          maxWidth: '480px',
+          maxWidth: '400px',
           margin: '0 auto',
         }}>
 
@@ -213,8 +213,8 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           <div style={{
             display: 'flex',
             gap: '8px',
-            padding: '10px',
-            height: '140px',
+            padding: '8px',
+            height: '110px',
             background: '#1a5c2a',
             borderBottom: '2px solid #c9a84c',
             direction: 'ltr',
@@ -254,29 +254,21 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         </div>
 
         {/* BOTTOM SECTION */}
-        <div style={{ background: '#ffffff', padding: '14px 16px 12px', position: 'relative' }}>
+        <div style={{ background: '#ffffff', padding: '10px 12px 10px', position: 'relative' }}>
 
           <p style={{
-            textAlign: 'center', color: '#1a1a1a', fontSize: '11px',
+            textAlign: 'center', color: '#1a1a1a', fontSize: '10px',
             fontFamily: 'Cairo, sans-serif', fontWeight: '700',
-            marginBottom: '6px', lineHeight: 1.8,
+            marginBottom: '5px', lineHeight: 1.7,
           }}>
-            أحباب رسول الله صلى الله عليه وسلم، سكان ولاية نواكشوط الجنوبية
+            أحباب رسول الله صلى الله عليه وسلم
           </p>
 
           <p style={{
-            textAlign: 'center', color: '#333', fontSize: '10.5px',
-            fontFamily: 'Cairo, sans-serif', marginBottom: '10px', lineHeight: 1.9,
+            textAlign: 'center', color: '#333', fontSize: '9.5px',
+            fontFamily: 'Cairo, sans-serif', marginBottom: '8px', lineHeight: 1.8,
           }}>
             أنتم مدعوون لحضور أمسية مديحية برعاية السيد عمدة عرفات ضمن موسم سيرة ونصرة الحبيب المصطفى صلى الله عليه وسلم المنظم من قبل التجمع الثقافي الإسلامي تخليدا لذكرى مولد نبي الرحمة سيدنا وقرة أعيننا محمد صلى الله عليه وسلم.
-            <br /><br />
-            <strong>الزمان:</strong> مساء الأحد القادم 16 أغسطس
-            <br />
-            <strong>التوقيت:</strong> الساعة السابعة مساءً
-            <br />
-            <strong>المكان:</strong> ساحة الولاية (كرفور المعرض)
-            <br /><br />
-            مرحبا بكم معنا نصرة وتعظيما للحبيب المصطفى صلى الله عليه وسلم
           </p>
 
           {/* Attendee name */}
@@ -295,7 +287,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               يتشرّف بحضوركم الكريم
             </p>
             <p style={{
-              color: '#1a1a1a', fontSize: '17px', fontWeight: 'bold',
+              color: '#1a1a1a', fontSize: '15px', fontWeight: 'bold',
               fontFamily: 'Cairo, sans-serif', lineHeight: 1.2,
               wordBreak: 'break-word',
             }}>
@@ -376,7 +368,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               background: '#fff', padding: '5px', borderRadius: '6px',
               border: '2px solid #2d6e2d', flexShrink: 0,
             }}>
-              <canvas ref={qrCanvasRef} width={90} height={90} style={{ display: 'block', width: '90px', height: '90px' }} />
+              <canvas ref={qrCanvasRef} width={75} height={75} style={{ display: 'block', width: '75px', height: '75px' }} />
             </div>
           </div>
         </div>

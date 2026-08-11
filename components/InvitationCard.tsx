@@ -167,10 +167,6 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     }
   };
 
-  const dateParts = confDate.split('-');
-  const dateStart = dateParts[0]?.trim() || confDate;
-  const dateEnd = dateParts[1]?.trim() || confDate;
-
   return (
     <div className="max-w-2xl mx-auto">
       {/* Success message */}
@@ -330,12 +326,11 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               marginBottom: '8px', display: 'block', textAlign: 'center',
               margin: '-6px -8px 8px -8px',
             }}>
-              الأمسية الختامية الكبرى
+              المكان
             </div>
             <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
-                الساعة السابعة مساءً<br />
-                {dateEnd}<br />
-                <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
+                ساحة الولاية<br />
+                (كرفور المعرض)
               </p>
             </div>
             <div style={{
@@ -350,12 +345,11 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               display: 'block', textAlign: 'center',
               margin: '-6px -8px 8px -8px',
             }}>
-              الافتتاح
+              الزمان والتوقيت
             </div>
             <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
-                الساعة الثامنة صباحاً<br />
-                {dateStart}<br />
-                <span style={{ color: '#555', fontSize: '8px' }}>{confLocation}</span>
+                مساء الأحد القادم<br />
+                16 أغسطس - السابعة مساءً
               </p>
             </div>
           </div>

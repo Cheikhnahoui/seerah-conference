@@ -2,44 +2,22 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken } from '@/lib/utils';
 import { AttendeeFormData } from '@/types';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
-// FIX 3: In-memory rate limiter — max 3 registrations per IP per 10 minutes
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const windowMs = 10 * 60 * 1000; // 10 minutes
-  const maxRequests = 3;
-
-  const entry = rateLimitMap.get(ip);
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + windowMs });
-    return true;
-  }
-  if (entry.count >= maxRequests) return false;
-  entry.count++;
-  return true;
-}
-
-// Clean up old entries every hour
-setInterval(() => {
-  const now = Date.now();
-  rateLimitMap.forEach((v, k) => { if (now > v.resetAt) rateLimitMap.delete(k); });
-}, 60 * 60 * 1000);
+// Rate limit: max 3 registration attempts per IP+phone per 10 minutes
+const registrationRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.fixedWindow(3, '10m'),
+  prefix: 'ratelimit:registration',
+});
 
 export async function POST(request: NextRequest) {
   try {
-    // Rate limit by IP
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim()
-      || request.headers.get('x-real-ip')
-      || 'unknown';
-
-    if (!checkRateLimit(ip)) {
-      return NextResponse.json(
-        { success: false, error: 'لقد تجاوزت الحد المسموح به. يرجى الانتظار 10 دقائق قبل المحاولة مجدداً.' },
-        { status: 429 }
-      );
-    }
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
 
     const body: AttendeeFormData = await request.json();
     const { full_name, phone_number, city, occupation } = body;
@@ -52,6 +30,24 @@ export async function POST(request: NextRequest) {
     }
 
     const cleanedPhone = formatPhoneNumber(phone_number);
+
+    // Rate limit key = IP + phone → each person blocked independently
+    const rateLimitKey = `${ip}:${cleanedPhone}`;
+    const { success, remaining, reset } = await registrationRatelimit.limit(rateLimitKey);
+
+    if (!success) {
+      const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `لقد تجاوزت الحد المسموح به. يرجى الانتظار ${Math.ceil(retryAfterSeconds / 60)} دقيقة قبل المحاولة مجدداً.`,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(retryAfterSeconds), 'X-RateLimit-Remaining': String(remaining) },
+        }
+      );
+    }
     const supabase = createServerSupabase();
 
     const { data: existing } = await supabase

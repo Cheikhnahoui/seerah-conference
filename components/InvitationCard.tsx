@@ -284,7 +284,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               color: '#1a5c1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif',
               marginBottom: '3px', fontWeight: '600',
             }}>
-              يتشرّف بحضوركم الكريم
+             فضيلة الشيخ محمد الحافظ النحوي يتشرف بحضوركم الكريم
             </p>
             <p style={{
               color: '#1a1a1a', fontSize: '15px', fontWeight: 'bold',

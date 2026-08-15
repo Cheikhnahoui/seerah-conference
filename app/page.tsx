@@ -5,8 +5,10 @@ import { RegistrationForm } from '@/components/RegistrationForm';
 import { InvitationCard } from '@/components/InvitationCard';
 import { Attendee } from '@/types';
 import { LangProvider, LangToggle, useLang } from '@/lib/i18n';
+import { ConfDateParts, formatConfDate } from '@/lib/dateFormat';
+import { translateLocation } from '@/lib/venueTranslations';
 
-let configCache: Record<string, string> | null = null;
+let configCache: Record<string, any> | null = null;
 let configPromise: Promise<void> | null = null;
 
 async function loadConfig() {
@@ -20,19 +22,34 @@ async function loadConfig() {
   await configPromise;
 }
 
+interface HomeConfig extends ConfDateParts {
+  conf_name: string;
+  conf_location: string;
+  conf_description: string;
+  conf_name_fr: string;
+  conf_description_fr: string;
+}
+
+const DEFAULT_CONFIG: HomeConfig = {
+  conf_name: 'المؤتمر الدولي للسيرة النبوية',
+  conf_location: 'المركز الدولي للمؤتمرات (المختار ولد داداه)',
+  conf_description: 'يسعدنا دعوتكم للمشاركة في المؤتمر الدولي للسيرة النبوية',
+  conf_name_fr: 'Conférence Internationale sur la Sîra du Prophète ﷺ',
+  conf_description_fr: 'Nous sommes heureux de vous inviter à participer à la Conférence Internationale sur la Sîra du Prophète ﷺ',
+  hijri_day_start: 21,
+  hijri_day_end: 23,
+  hijri_month: 3,
+  hijri_year: 1448,
+  greg_day_start: 4,
+  greg_day_end: 6,
+  greg_month: 9,
+  greg_year: 2026,
+};
+
 function HomeContent() {
   const { t, lang } = useLang();
   const [registeredAttendee, setRegisteredAttendee] = useState<Attendee | null>(null);
-  const [config, setConfig] = useState({
-    conf_name: 'المؤتمر الدولي للسيرة النبوية',
-    conf_date: '١٥-١٧ ربيع الأول ١٤٤٦',
-    conf_location: 'نواكشوط - موريتانيا',
-    conf_description: 'يسعدنا دعوتكم للمشاركة في المؤتمر الدولي للسيرة النبوية',
-    conf_name_fr: 'Conférence Internationale sur la Sîra du Prophète ﷺ',
-    conf_date_fr: '22-24 Rabi Al-Awwal 1448H',
-    conf_location_fr: 'Nouakchott -- Mauritanie',
-    conf_description_fr: 'Nous sommes heureux de vous inviter à participer à la Conférence Internationale sur la Sîra du Prophète ﷺ',
-  });
+  const [config, setConfig] = useState<HomeConfig>(DEFAULT_CONFIG);
 
   useEffect(() => {
     loadConfig().then(() => {
@@ -40,17 +57,28 @@ function HomeContent() {
         setConfig(prev => ({
           ...prev,
           conf_name: configCache?.conf_name || prev.conf_name,
-          conf_date: configCache?.conf_date || prev.conf_date,
           conf_location: configCache?.conf_location || prev.conf_location,
           conf_description: configCache?.conf_description || prev.conf_description,
           conf_name_fr: configCache?.conf_name_fr || prev.conf_name_fr,
-          conf_date_fr: configCache?.conf_date_fr || prev.conf_date_fr,
-          conf_location_fr: configCache?.conf_location_fr || prev.conf_location_fr,
           conf_description_fr: configCache?.conf_description_fr || prev.conf_description_fr,
+          hijri_day_start: configCache?.hijri_day_start ?? prev.hijri_day_start,
+          hijri_day_end: configCache?.hijri_day_end ?? prev.hijri_day_end,
+          hijri_month: configCache?.hijri_month ?? prev.hijri_month,
+          hijri_year: configCache?.hijri_year ?? prev.hijri_year,
+          greg_day_start: configCache?.greg_day_start ?? prev.greg_day_start,
+          greg_day_end: configCache?.greg_day_end ?? prev.greg_day_end,
+          greg_month: configCache?.greg_month ?? prev.greg_month,
+          greg_year: configCache?.greg_year ?? prev.greg_year,
         }));
       }
     });
   }, []);
+
+  // Date and location are ALWAYS derived from the same source data,
+  // so the Arabic and French pages can never disagree again.
+  const displayDate = formatConfDate(config, lang);
+  const displayLocation =
+    lang === 'fr' ? translateLocation(config.conf_location) : config.conf_location;
 
   return (
     <main className="min-h-screen" style={{ background: 'var(--color-bg)' }} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
@@ -115,11 +143,11 @@ function HomeContent() {
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
               style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span>📅</span><span>{lang === 'fr' ? config.conf_date_fr : config.conf_date}</span>
+              <span>📅</span><span>{displayDate}</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
               style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span>📍</span><span>{lang === 'fr' ? config.conf_location_fr : config.conf_location}</span>
+              <span>📍</span><span>{displayLocation}</span>
             </div>
           </div>
         </div>

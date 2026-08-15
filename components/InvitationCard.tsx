@@ -3,16 +3,19 @@
 import { useRef, useState, useEffect } from 'react';
 import { Attendee } from '@/types';
 import { useLang } from '@/lib/i18n';
+import { ConfDateParts, formatConfDate } from '@/lib/dateFormat';
+import { translateLocation } from '@/lib/venueTranslations';
 
 interface InvitationCardProps {
   attendee: Attendee;
 }
 
-let configCache: {
-  conf_date?: string;
-  conf_location?: string;
-  conf_name?: string;
-} | null = null;
+let configCache:
+  | (Partial<ConfDateParts> & {
+      conf_location?: string;
+      conf_name?: string;
+    })
+  | null = null;
 
 let configPromise: Promise<void> | null = null;
 
@@ -37,23 +40,41 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
 
-  const { t } = useLang();
+  const { t, lang } = useLang();
 
   const [downloading, setDownloading] = useState(false);
 
-  const [confDate, setConfDate] = useState('١٥-١٧ ربيع الأول ١٤٤٦');
-  const [confLocation, setConfLocation] = useState('نواكشوط - موريتانيا');
+  const [dateParts, setDateParts] = useState<Partial<ConfDateParts>>({
+    hijri_day_start: 21,
+    hijri_day_end: 23,
+    hijri_month: 3,
+    hijri_year: 1448,
+    greg_day_start: 4,
+    greg_day_end: 6,
+    greg_month: 9,
+    greg_year: 2026,
+  });
+  const [confLocationAr, setConfLocationAr] = useState(
+    'المركز الدولي للمؤتمرات (المختار ولد داداه)'
+  );
   const [confName, setConfName] = useState('المؤتمر الدولي للسيرة النبوية');
 
   useEffect(() => {
     loadConfig().then(() => {
       if (configCache) {
-        if (configCache.conf_date) {
-          setConfDate(configCache.conf_date);
-        }
+        setDateParts(prev => ({
+          hijri_day_start: configCache?.hijri_day_start ?? prev.hijri_day_start,
+          hijri_day_end: configCache?.hijri_day_end ?? prev.hijri_day_end,
+          hijri_month: configCache?.hijri_month ?? prev.hijri_month,
+          hijri_year: configCache?.hijri_year ?? prev.hijri_year,
+          greg_day_start: configCache?.greg_day_start ?? prev.greg_day_start,
+          greg_day_end: configCache?.greg_day_end ?? prev.greg_day_end,
+          greg_month: configCache?.greg_month ?? prev.greg_month,
+          greg_year: configCache?.greg_year ?? prev.greg_year,
+        }));
 
         if (configCache.conf_location) {
-          setConfLocation(configCache.conf_location);
+          setConfLocationAr(configCache.conf_location);
         }
 
         if (configCache.conf_name) {
@@ -62,6 +83,12 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
       }
     });
   }, []);
+
+  // Both the Arabic and French text on the card are derived from the
+  // same structured data, so they can never disagree.
+  const displayDate = formatConfDate(dateParts, lang);
+  const displayLocation =
+    lang === 'fr' ? translateLocation(confLocationAr) : confLocationAr;
 
   useEffect(() => {
     if (!qrCanvasRef.current || !attendee.registration_number) return;
@@ -615,9 +642,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   paddingTop: '2px',
                 }}
               >
-                المركز الدولي للمؤتمرات
-                <br />
-                (المختار ولد داداه)
+                {displayLocation}
               </p>
 
             </div>
@@ -686,9 +711,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   paddingTop: '2px',
                 }}
               >
-                21 – 23 ربيع الأول 1448هـ
-                <br />
-                الموافق 4 – 6 سبتمبر 2026م
+                {displayDate}
               </p>
 
             </div>

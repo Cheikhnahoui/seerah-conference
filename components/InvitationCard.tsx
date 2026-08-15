@@ -668,7 +668,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                     '-6px -8px 8px -8px',
                 }}
               >
-                الزمان والتوقيت
+               التاريخ
               </div>
 
               <p
@@ -686,9 +686,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   paddingTop: '2px',
                 }}
               >
-                مساء الأحد القادم
+               21 – 23 ربيع الأول 1448هـ
                 <br />
-                16 أغسطس - السابعة مساءً
+                الموافق 4 – 6 سبتمبر 2026م
               </p>
 
             </div>
@@ -793,7 +793,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   marginBottom: '4px',
                 }}
               >
-                امسح رمز QR عند الدخول
+              
               </p>
 
               <p

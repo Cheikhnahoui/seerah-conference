@@ -192,7 +192,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           borderRadius: '4px',
           overflow: 'hidden',
           boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
-          maxWidth: '340px',
+          maxWidth: '420px',
           margin: '0 auto',
         }}>
 
@@ -343,7 +343,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               background: '#fff', padding: '5px', borderRadius: '6px',
               border: '2px solid #2d6e2d', flexShrink: 0,
             }}>
-              <canvas ref={qrCanvasRef} width={200} height={200} style={{ display: 'block', width: '90px', height: '90px' }} />
+              <canvas ref={qrCanvasRef} width={200} height={200} style={{ display: 'block', width: '70px', height: '70px' }} />
             </div>
             {/* نصوص يمين */}
             <div style={{ textAlign: 'right', flex: 1 }} dir="rtl">

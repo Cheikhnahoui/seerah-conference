@@ -248,7 +248,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <img src="/gci-logo.jpeg" alt="GCI"
+              <img src="/gci-logo-new.jpeg" alt="GCI"
                 style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'high-quality' as any }} />
             </div>
           </div>

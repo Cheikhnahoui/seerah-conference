@@ -330,15 +330,32 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             </div>
           </div>
 
-          {/* QR Code - centered below columns */}
+          {/* QR Code + labels row */}
           <div style={{
-            display: 'flex', justifyContent: 'center', marginBottom: '8px',
+            display: 'flex', alignItems: 'center',
+            gap: '12px', padding: '10px',
+            background: 'linear-gradient(135deg, #f5f0e0, #ede8d0)',
+            borderRadius: '8px', border: '1px solid #c9a84c',
+            marginBottom: '8px', direction: 'ltr',
           }}>
+            {/* QR يسار */}
             <div style={{
-              background: '#fff', padding: '6px', borderRadius: '8px',
-              border: '2px solid #2d6e2d',
+              background: '#fff', padding: '5px', borderRadius: '6px',
+              border: '2px solid #2d6e2d', flexShrink: 0,
             }}>
-              <canvas ref={qrCanvasRef} width={200} height={200} style={{ display: 'block', width: '110px', height: '110px' }} />
+              <canvas ref={qrCanvasRef} width={200} height={200} style={{ display: 'block', width: '90px', height: '90px' }} />
+            </div>
+            {/* نصوص يمين */}
+            <div style={{ textAlign: 'right', flex: 1 }} dir="rtl">
+              <p style={{ color: '#1a5c1a', fontSize: '12px', fontFamily: 'Cairo, sans-serif', fontWeight: '700', marginBottom: '4px' }}>
+                بطاقة الدخول الإلكترونية
+              </p>
+              <p style={{ color: '#555', fontSize: '10px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5, marginBottom: '4px' }}>
+                امسح رمز QR عند الدخول
+              </p>
+              <p style={{ color: '#c9a84c', fontSize: '9px', fontFamily: 'monospace' }}>
+                {attendee.registration_number}
+              </p>
             </div>
           </div>
         </div>

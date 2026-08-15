@@ -243,7 +243,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               borderRadius: '10px',
               overflow: 'hidden',
               border: '2px solid #c9a84c',
-              background: '#0a0a0a',
+              background: '#ffffff',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',

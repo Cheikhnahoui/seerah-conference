@@ -73,7 +73,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
       });
 
       QRCode.toCanvas(qrCanvasRef.current, qrData, {
-        width: 200,
+        width: 160,
         margin: 1,
         color: {
           dark: '#1a4a1a',
@@ -615,9 +615,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   paddingTop: '2px',
                 }}
               >
-              المركز الدولي للمؤتمرات
+                المركز الدولي للمؤتمرات
                 <br />
-              (المختار ولد داداه)
+                (المختار ولد داداه)
               </p>
 
             </div>
@@ -668,7 +668,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                     '-6px -8px 8px -8px',
                 }}
               >
-               التاريخ
+                التاريخ
               </div>
 
               <p
@@ -686,7 +686,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   paddingTop: '2px',
                 }}
               >
-               21 – 23 ربيع الأول 1448هـ
+                21 – 23 ربيع الأول 1448هـ
                 <br />
                 الموافق 4 – 6 سبتمبر 2026م
               </p>
@@ -728,7 +728,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               style={{
                 background: '#fff',
 
-                padding: '5px',
+                padding: '4px',
 
                 borderRadius: '6px',
 
@@ -740,14 +740,14 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             >
               <canvas
                 ref={qrCanvasRef}
-                width={200}
-                height={200}
+                width={160}
+                height={160}
                 style={{
                   display: 'block',
 
-                  width: '70px',
+                  width: '46px',
 
-                  height: '70px',
+                  height: '46px',
                 }}
               />
             </div>
@@ -776,7 +776,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   marginBottom: '4px',
                 }}
               >
-                بطاقة الدخول الإلكترونية
+               
               </p>
 
               <p

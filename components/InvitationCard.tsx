@@ -287,8 +287,8 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             </p>
           </div>
 
-          {/* 3 columns: المكان | QR | الزمان والتوقيت */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '6px', marginBottom: '8px', direction: 'ltr' }}>
+          {/* 2 columns: المكان | الزمان والتوقيت */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px', direction: 'ltr' }}>
             {/* المكان */}
             <div style={{
               background: 'linear-gradient(135deg, #fffde7, #fff8e1)',
@@ -309,18 +309,6 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               </p>
             </div>
 
-            {/* QR في الوسط */}
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}>
-              <div style={{
-                background: '#fff', padding: '4px', borderRadius: '6px',
-                border: '2px solid #2d6e2d', flexShrink: 0,
-              }}>
-                <canvas ref={qrCanvasRef} width={200} height={200} style={{ display: 'block', width: '80px', height: '80px' }} />
-              </div>
-            </div>
-
             {/* الزمان والتوقيت */}
             <div style={{
               background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
@@ -339,6 +327,18 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.8, paddingTop: '2px' }}>
                 مساء الأحد القادم<br />16 أغسطس - السابعة مساءً
               </p>
+            </div>
+          </div>
+
+          {/* QR Code - centered below columns */}
+          <div style={{
+            display: 'flex', justifyContent: 'center', marginBottom: '8px',
+          }}>
+            <div style={{
+              background: '#fff', padding: '6px', borderRadius: '8px',
+              border: '2px solid #2d6e2d',
+            }}>
+              <canvas ref={qrCanvasRef} width={200} height={200} style={{ display: 'block', width: '110px', height: '110px' }} />
             </div>
           </div>
         </div>

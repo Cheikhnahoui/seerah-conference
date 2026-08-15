@@ -2,6 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { Attendee } from '@/types';
+import { useLang } from '@/lib/i18n';
 
 interface InvitationCardProps {
   attendee: Attendee;
@@ -79,6 +80,7 @@ function CrescentSVG({ size = 36 }: { size?: number }) {
 export function InvitationCard({ attendee }: InvitationCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const { t } = useLang();
   const [downloading, setDownloading] = useState(false);
   const [confDate, setConfDate] = useState('١٥-١٧ ربيع الأول ١٤٤٦');
   const [confLocation, setConfLocation] = useState('نواكشوط - موريتانيا');
@@ -173,9 +175,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
       <div className="text-center mb-6">
         <div className="inline-flex items-center gap-2 px-6 py-3 rounded-full mb-4 alert-success">
           <span>✅</span>
-          <span className="font-semibold">تم التسجيل بنجاح!</span>
+          <span className="font-semibold">{t('success_registered')}</span>
         </div>
-        <p style={{ color: 'var(--color-text-muted)' }}>بطاقة دعوتك جاهزة للتحميل</p>
+        <p style={{ color: 'var(--color-text-muted)' }}>{t('card_ready')}</p>
       </div>
 
       {/* ===== THE CARD ===== */}
@@ -261,14 +263,14 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             fontFamily: 'Cairo, sans-serif', fontWeight: '700',
             marginBottom: '5px', lineHeight: 1.7,
           }}>
-            أحباب رسول الله صلى الله عليه وسلم
+            {t('invitation_title')}
           </p>
 
           <p style={{
             textAlign: 'center', color: '#333', fontSize: '9.5px',
             fontFamily: 'Cairo, sans-serif', marginBottom: '8px', lineHeight: 1.8,
           }}>
-            أنتم مدعوون لحضور أمسية مديحية برعاية السيد عمدة عرفات ضمن موسم سيرة ونصرة الحبيب المصطفى صلى الله عليه وسلم المنظم من قبل التجمع الثقافي الإسلامي تخليدا لذكرى مولد نبي الرحمة سيدنا وقرة أعيننا محمد صلى الله عليه وسلم.
+            {t('invitation_body')}
           </p>
 
           {/* Attendee name */}
@@ -284,7 +286,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               color: '#1a5c1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif',
               marginBottom: '3px', fontWeight: '600',
             }}>
-             فضيلة الشيخ محمد الحافظ النحوي يتشرف بحضوركم الكريم
+             {t('honor_text')}
             </p>
             <p style={{
               color: '#1a1a1a', fontSize: '15px', fontWeight: 'bold',
@@ -380,7 +382,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           color: '#fff', fontSize: '11px',
           fontFamily: 'Amiri, serif', lineHeight: 1.6,
         }}>
-          معًا لنصرة الحبيب المصطفى ﷺ، وترسيخ محبته في القلوب، ونصرة الأشقاء في فلسطين
+          {t("card_footer")}
         </div>
 
         {/* Bottom gold bar */}
@@ -395,13 +397,13 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         <button onClick={downloadAsPNG} disabled={downloading}
           className="btn-gold flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2">
           <span>⬇️</span>
-          <span>{downloading ? 'جاري التحميل...' : 'تحميل PNG'}</span>
+          <span>{downloading ? t('downloading') : t('download_png')}</span>
         </button>
         <button onClick={downloadAsPDF} disabled={downloading}
           className="flex-1 py-3 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all hover:opacity-90"
           style={{ background: 'rgba(184,134,11,0.1)', border: '1.5px solid rgba(184,134,11,0.4)', color: 'var(--color-gold-dark)' }}>
           <span>📄</span>
-          <span>{downloading ? 'جاري التحميل...' : 'تحميل PDF'}</span>
+          <span>{downloading ? t('downloading') : t('download_pdf')}</span>
         </button>
       </div>
     </div>

@@ -6,8 +6,10 @@ import { InvitationCard } from '@/components/InvitationCard';
 import { IslamicPattern } from '@/components/ui/IslamicPattern';
 import { MAURITANIA_CONFIG, formatMauritanianPhone } from '@/lib/mauritania';
 import Link from 'next/link';
+import { LangProvider, LangToggle, useLang } from '@/lib/i18n';
 
-export default function RetrievePage() {
+function RetrieveContent() {
+  const { t, lang } = useLang();
   const [phoneLocal, setPhoneLocal] = useState('');
   const [loading, setLoading] = useState(false);
   const [attendee, setAttendee] = useState<Attendee | null>(null);
@@ -19,29 +21,25 @@ export default function RetrievePage() {
     setLoading(true);
     setError('');
     setAttendee(null);
-
     try {
       const fullPhone = formatMauritanianPhone(phoneLocal);
       const digits = fullPhone.replace(/\D/g, '');
-
-      // FIX: Use the dedicated retrieve endpoint instead of the admin attendees list
       const response = await fetch(`/api/retrieve?phone=${digits}`);
       const result = await response.json();
-
       if (result.success && result.data) {
         setAttendee(result.data);
       } else {
-        setError(result.error || 'لم يتم العثور على تسجيل بهذا الرقم');
+        setError(result.error || t('retrieve_not_found'));
       }
     } catch {
-      setError('حدث خطأ أثناء البحث');
+      setError(t('retrieve_error'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <main className="min-h-screen relative" style={{ background: 'var(--color-bg)' }}>
+    <main className="min-h-screen relative" style={{ background: 'var(--color-bg)' }} dir={lang === 'ar' ? 'rtl' : 'ltr'}>
       <div className="fixed inset-0 pointer-events-none">
         <div className="absolute top-0 left-0 w-[400px] h-[400px] rounded-full opacity-10"
           style={{ background: 'radial-gradient(circle, #c9a84c 0%, transparent 70%)', filter: 'blur(80px)' }} />
@@ -49,19 +47,20 @@ export default function RetrievePage() {
       </div>
 
       <div className="relative z-10 container mx-auto px-4 py-12 max-w-2xl">
-        <Link href="/" className="inline-flex items-center gap-2 text-sm mb-8 hover:opacity-80 transition-opacity"
-          style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
-          <span>→</span>
-          <span>العودة للصفحة الرئيسية</span>
-        </Link>
+        <div className="flex items-center justify-between mb-8">
+          <Link href="/" className="inline-flex items-center gap-2 text-sm hover:opacity-80 transition-opacity"
+            style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
+            <span>{lang === 'ar' ? '→' : '←'}</span>
+            <span>{t('back_home')}</span>
+          </Link>
+          <LangToggle />
+        </div>
 
         <div className="text-center mb-10">
           <h1 className="text-3xl font-bold mb-3" style={{ color: 'var(--color-green-dark)', fontFamily: 'Cairo, sans-serif' }}>
-            استرجاع بطاقة الدعوة
+            {t('retrieve_title')}
           </h1>
-          <p style={{ color: 'rgba(240, 230, 208, 0.6)' }}>
-            أدخل رقم هاتفك الموريتاني لاسترجاع بطاقة دعوتك
-          </p>
+          <p style={{ color: 'var(--color-text-muted)' }}>{t('retrieve_subtitle')}</p>
         </div>
 
         {!attendee && (
@@ -69,50 +68,31 @@ export default function RetrievePage() {
             <form onSubmit={handleSearch} className="space-y-5">
               <div>
                 <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-                  رقم الهاتف المسجل
+                  {t('retrieve_phone_label')}
                 </label>
                 <div className="flex gap-2">
                   <div className="flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-bold flex-shrink-0"
-                    style={{
-                      background: 'rgba(201, 168, 76, 0.15)',
-                      border: '1px solid rgba(201, 168, 76, 0.4)',
-                      color: 'var(--color-gold)',
-                      fontFamily: 'monospace',
-                    }}>
+                    style={{ background: 'rgba(201, 168, 76, 0.15)', border: '1px solid rgba(201, 168, 76, 0.4)', color: 'var(--color-gold)', fontFamily: 'monospace' }}>
                     <span>{MAURITANIA_CONFIG.countryFlag}</span>
                     <span>{MAURITANIA_CONFIG.countryCode}</span>
                   </div>
-                  <input
-                    type="tel"
-                    value={phoneLocal}
+                  <input type="tel" value={phoneLocal}
                     onChange={(e) => setPhoneLocal(e.target.value.replace(/[^\d\s\-]/g, ''))}
                     placeholder="XX XX XX XX"
                     className="input-islamic flex-1 px-4 py-3 rounded-xl text-base"
-                    dir="ltr"
-                    style={{ textAlign: 'left', fontFamily: 'monospace' }}
-                    maxLength={12}
-                  />
+                    dir="ltr" style={{ textAlign: 'left', fontFamily: 'monospace' }}
+                    maxLength={12} />
                 </div>
               </div>
 
-              {error && (
-                <div className="alert-error rounded-xl p-4 text-center text-sm">{error}</div>
-              )}
+              {error && <div className="alert-error rounded-xl p-4 text-center text-sm">{error}</div>}
 
-              <button
-                type="submit"
-                disabled={loading}
+              <button type="submit" disabled={loading}
                 className="btn-gold w-full py-4 rounded-xl text-lg font-bold flex items-center justify-center gap-3">
                 {loading ? (
-                  <>
-                    <span className="spinner w-5 h-5" style={{ borderWidth: '2px' }} />
-                    <span>جاري البحث...</span>
-                  </>
+                  <><span className="spinner w-5 h-5" style={{ borderWidth: '2px' }} /><span>{t('retrieve_searching')}</span></>
                 ) : (
-                  <>
-                    <span>🔍</span>
-                    <span>بحث عن دعوتي</span>
-                  </>
+                  <><span>🔍</span><span>{t('retrieve_search')}</span></>
                 )}
               </button>
             </form>
@@ -123,16 +103,22 @@ export default function RetrievePage() {
           <div className="animate-[slideUp_0.5s_ease-out]">
             <InvitationCard attendee={attendee} />
             <div className="text-center mt-6">
-              <button
-                onClick={() => { setAttendee(null); setPhoneLocal(''); }}
-                className="text-sm hover:underline"
-                style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
-                البحث برقم آخر
+              <button onClick={() => { setAttendee(null); setPhoneLocal(''); }}
+                className="text-sm hover:underline" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
+                {t('retrieve_another')}
               </button>
             </div>
           </div>
         )}
       </div>
     </main>
+  );
+}
+
+export default function RetrievePage() {
+  return (
+    <LangProvider>
+      <RetrieveContent />
+    </LangProvider>
   );
 }

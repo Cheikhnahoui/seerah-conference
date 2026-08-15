@@ -509,7 +509,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                 marginBottom: '6px',
               }}
             >
-              {attendee.full_name}
+              {`السيد(ة) ${attendee.full_name}`}
             </p>
 
             <p
@@ -703,9 +703,13 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             style={{
               display: 'flex',
 
+              flexDirection: 'column',
+
               alignItems: 'center',
 
-              gap: '12px',
+              justifyContent: 'center',
+
+              gap: '8px',
 
               padding: '10px',
 
@@ -718,8 +722,6 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                 '1px solid #c9a84c',
 
               marginBottom: '8px',
-
-              direction: 'ltr',
             }}
           >
 
@@ -745,70 +747,27 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                 style={{
                   display: 'block',
 
-                  width: '46px',
+                  width: '110px',
 
-                  height: '46px',
+                  height: '110px',
                 }}
               />
             </div>
 
-            {/* QR information */}
-            <div
+            {/* Registration code, centered below the QR */}
+            <p
               style={{
-                textAlign: 'right',
+                color: '#c9a84c',
 
-                flex: 1,
+                fontSize: '10px',
+
+                fontFamily: 'monospace',
+
+                textAlign: 'center',
               }}
-              dir="rtl"
             >
-
-              <p
-                style={{
-                  color: '#1a5c1a',
-
-                  fontSize: '12px',
-
-                  fontFamily:
-                    'Cairo, sans-serif',
-
-                  fontWeight: '700',
-
-                  marginBottom: '4px',
-                }}
-              >
-               
-              </p>
-
-              <p
-                style={{
-                  color: '#555',
-
-                  fontSize: '10px',
-
-                  fontFamily:
-                    'Cairo, sans-serif',
-
-                  lineHeight: 1.5,
-
-                  marginBottom: '4px',
-                }}
-              >
-              
-              </p>
-
-              <p
-                style={{
-                  color: '#c9a84c',
-
-                  fontSize: '9px',
-
-                  fontFamily: 'monospace',
-                }}
-              >
-                {attendee.registration_number}
-              </p>
-
-            </div>
+              {attendee.registration_number}
+            </p>
 
           </div>
 

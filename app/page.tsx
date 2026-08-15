@@ -28,6 +28,10 @@ function HomeContent() {
     conf_date: '١٥-١٧ ربيع الأول ١٤٤٦',
     conf_location: 'نواكشوط - موريتانيا',
     conf_description: 'يسعدنا دعوتكم للمشاركة في المؤتمر الدولي للسيرة النبوية',
+    conf_name_fr: 'Conférence Internationale sur la Sîra du Prophète ﷺ',
+    conf_date_fr: '22-24 Rabi Al-Awwal 1448H',
+    conf_location_fr: 'Nouakchott -- Mauritanie',
+    conf_description_fr: 'Nous sommes heureux de vous inviter à participer à la Conférence Internationale sur la Sîra du Prophète ﷺ',
   });
 
   useEffect(() => {
@@ -39,6 +43,10 @@ function HomeContent() {
           conf_date: configCache?.conf_date || prev.conf_date,
           conf_location: configCache?.conf_location || prev.conf_location,
           conf_description: configCache?.conf_description || prev.conf_description,
+          conf_name_fr: configCache?.conf_name_fr || prev.conf_name_fr,
+          conf_date_fr: configCache?.conf_date_fr || prev.conf_date_fr,
+          conf_location_fr: configCache?.conf_location_fr || prev.conf_location_fr,
+          conf_description_fr: configCache?.conf_description_fr || prev.conf_description_fr,
         }));
       }
     });
@@ -91,7 +99,7 @@ function HomeContent() {
 
           <h1 className="text-3xl md:text-4xl font-bold mb-2 leading-tight"
             style={{ color: '#ffffff', fontFamily: 'Cairo, sans-serif' }}>
-            {config.conf_name}
+            {lang === 'fr' ? config.conf_name_fr : config.conf_name}
           </h1>
 
           <div className="flex justify-center my-3">
@@ -101,17 +109,17 @@ function HomeContent() {
           </div>
 
           <p className="text-base mb-6" style={{ color: 'rgba(255,255,255,0.85)' }}>
-            {config.conf_description}
+            {lang === 'fr' ? config.conf_description_fr : config.conf_description}
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3">
             <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
               style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span>📅</span><span>{config.conf_date}</span>
+              <span>📅</span><span>{lang === 'fr' ? config.conf_date_fr : config.conf_date}</span>
             </div>
             <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
               style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span>📍</span><span>{config.conf_location}</span>
+              <span>📍</span><span>{lang === 'fr' ? config.conf_location_fr : config.conf_location}</span>
             </div>
           </div>
         </div>

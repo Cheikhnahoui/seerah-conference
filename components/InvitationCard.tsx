@@ -221,19 +221,35 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             borderBottom: '2px solid #c9a84c',
             direction: 'ltr',
           }}>
-            {/* Center: GCI Logo only */}
+            {/* Left: Conference Logo */}
             <div style={{
-              width: '100%',
+              flex: 1,
               height: '100%',
               borderRadius: '10px',
               overflow: 'hidden',
               border: '2px solid #c9a84c',
+              background: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}>
+              <img src="/conf-logo.png" alt="شعار المؤتمر"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', padding: '4px' }} />
+            </div>
+            {/* Right: GCI Logo */}
+            <div style={{
+              flex: 1,
+              height: '100%',
+              borderRadius: '10px',
+              overflow: 'hidden',
+              border: '2px solid #c9a84c',
+              background: '#0a0a0a',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
             }}>
               <img src="/gci-logo.jpeg" alt="GCI"
-                style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0a', imageRendering: 'high-quality' as any }} />
+                style={{ width: '100%', height: '100%', objectFit: 'contain', imageRendering: 'high-quality' as any }} />
             </div>
           </div>
         </div>

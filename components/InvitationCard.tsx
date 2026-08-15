@@ -101,7 +101,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     import('qrcode').then(QRCode => {
       const qrData = JSON.stringify({ reg: attendee.registration_number, app: 'seerah-conf' });
       QRCode.toCanvas(qrCanvasRef.current, qrData, {
-        width: 120,
+        width: 45,
         margin: 1,
         color: { dark: '#1a4a1a', light: '#ffffff' },
         errorCorrectionLevel: 'H',
@@ -192,7 +192,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           borderRadius: '4px',
           overflow: 'hidden',
           boxShadow: '0 8px 40px rgba(0,0,0,0.15)',
-          maxWidth: '400px',
+          maxWidth: '340px',
           margin: '0 auto',
         }}>
 
@@ -294,82 +294,60 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             }}>
               {attendee.full_name}
             </p>
-            <p style={{
-              color: '#666', fontSize: '9px', fontFamily: 'monospace',
-              marginTop: '3px', letterSpacing: '1px',
-            }}>
-              {attendee.registration_number}
-            </p>
           </div>
 
-          {/* Opening / Closing columns */}
-          {/* DOM order matches visual order explicitly (Opening on the right via
-              LTR layout: Closing first in DOM, Opening second) instead of relying
-              on RTL grid reversal, for the same html2canvas reliability reason. */}
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', marginBottom: '8px', direction: 'ltr' }}>
+          {/* 3 columns: المكان | QR | الزمان والتوقيت */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr auto 1fr', gap: '6px', marginBottom: '8px', direction: 'ltr' }}>
+            {/* المكان */}
             <div style={{
               background: 'linear-gradient(135deg, #fffde7, #fff8e1)',
               border: '1px solid #c9a84c', borderRadius: '6px',
               padding: '6px 8px', textAlign: 'center',
             }}>
-            <div style={{
-              background: 'linear-gradient(90deg, #c9a84c, #f0d080)',
-              color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
-              fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px 4px 0 0',
-              marginBottom: '8px', display: 'block', textAlign: 'center',
-              margin: '-6px -8px 8px -8px',
-            }}>
-              المكان
-            </div>
-            <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
-                ساحة الولاية<br />
-                (كرفور المعرض)
+              <div style={{
+                background: 'linear-gradient(90deg, #c9a84c, #f0d080)',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+                fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px 4px 0 0',
+                display: 'block', textAlign: 'center',
+                margin: '-6px -8px 8px -8px',
+              }}>
+                المكان
+              </div>
+              <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.8, paddingTop: '2px' }}>
+                ساحة الولاية<br />(كرفور المعرض)
               </p>
             </div>
+
+            {/* QR في الوسط */}
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}>
+              <div style={{
+                background: '#fff', padding: '4px', borderRadius: '6px',
+                border: '2px solid #2d6e2d', flexShrink: 0,
+              }}>
+                <canvas ref={qrCanvasRef} width={45} height={45} style={{ display: 'block', width: '45px', height: '45px' }} />
+              </div>
+            </div>
+
+            {/* الزمان والتوقيت */}
             <div style={{
               background: 'linear-gradient(135deg, #f0fff0, #e8f5e8)',
               border: '1px solid #2d6e2d', borderRadius: '6px',
               padding: '6px 8px', textAlign: 'center',
             }}>
-            <div style={{
-              background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
-              color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
-              fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px 4px 0 0',
-              display: 'block', textAlign: 'center',
-              margin: '-6px -8px 8px -8px',
-            }}>
-              الزمان والتوقيت
-            </div>
-            <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 2, paddingTop: '2px' }}>
-                مساء الأحد القادم<br />
-                16 أغسطس - السابعة مساءً
+              <div style={{
+                background: 'linear-gradient(90deg, #1a5c1a, #2d8a2d)',
+                color: '#fff', fontFamily: 'Cairo, sans-serif', fontSize: '10px',
+                fontWeight: 'bold', padding: '4px 8px', borderRadius: '4px 4px 0 0',
+                display: 'block', textAlign: 'center',
+                margin: '-6px -8px 8px -8px',
+              }}>
+                الزمان والتوقيت
+              </div>
+              <p dir="rtl" style={{ color: '#1a1a1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.8, paddingTop: '2px' }}>
+                مساء الأحد القادم<br />16 أغسطس - السابعة مساءً
               </p>
-            </div>
-          </div>
-
-          {/* QR Code row */}
-          <div style={{
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            gap: '14px', padding: '10px',
-            background: 'linear-gradient(135deg, #f5f0e0, #ede8d0)',
-            borderRadius: '8px', border: '1px solid #c9a84c',
-          }}>
-            <div style={{ textAlign: 'center' }}>
-              <p style={{ color: '#1a5c1a', fontSize: '11px', fontFamily: 'Cairo, sans-serif', fontWeight: '700', marginBottom: '3px' }}>
-                بطاقة الدخول الإلكترونية
-              </p>
-              <p style={{ color: '#555', fontSize: '9px', fontFamily: 'Cairo, sans-serif', lineHeight: 1.5 }}>
-                امسح رمز QR عند الدخول
-              </p>
-              <p style={{ color: '#c9a84c', fontSize: '9px', fontFamily: 'monospace', marginTop: '3px' }}>
-                {attendee.registration_number}
-              </p>
-            </div>
-            <div style={{
-              background: '#fff', padding: '5px', borderRadius: '6px',
-              border: '2px solid #2d6e2d', flexShrink: 0,
-            }}>
-              <canvas ref={qrCanvasRef} width={55} height={55} style={{ display: 'block', width: '55px', height: '55px' }} />
             </div>
           </div>
         </div>
@@ -408,3 +386,4 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     </div>
   );
 }
+

@@ -88,8 +88,8 @@ function HomeContent() {
               backgroundImage: 'url(/dome.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center top' }} />
             <div style={{ flexShrink: 0, width: 'clamp(140px, 40%, 260px)', height: '100%', borderRadius: '10px',
               overflow: 'hidden', border: '2px solid rgba(212,160,23,0.7)', boxShadow: '0 0 30px rgba(212,160,23,0.2)' }}>
-              <img src="/gci-logo.jpeg" alt="GCI"
-                style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#0a0a0a' }} />
+              <img src="/gci-logo-new.jpeg" alt="GCI"
+                style={{ width: '100%', height: '100%', objectFit: 'contain', background: '#ffffff' }} />
             </div>
             <div style={{ flex: '1', height: '100%', borderRadius: '10px', overflow: 'hidden', minWidth: '60px',
               backgroundImage: 'url(/green-dome.jpeg)', backgroundSize: 'cover', backgroundPosition: 'center top' }} />

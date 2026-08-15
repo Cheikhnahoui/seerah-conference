@@ -101,7 +101,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     import('qrcode').then(QRCode => {
       const qrData = JSON.stringify({ reg: attendee.registration_number, app: 'seerah-conf' });
       QRCode.toCanvas(qrCanvasRef.current, qrData, {
-        width: 45,
+        width: 80,
         margin: 1,
         color: { dark: '#1a4a1a', light: '#ffffff' },
         errorCorrectionLevel: 'H',
@@ -326,7 +326,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                 background: '#fff', padding: '4px', borderRadius: '6px',
                 border: '2px solid #2d6e2d', flexShrink: 0,
               }}>
-                <canvas ref={qrCanvasRef} width={45} height={45} style={{ display: 'block', width: '45px', height: '45px' }} />
+                <canvas ref={qrCanvasRef} width={80} height={80} style={{ display: 'block', width: '80px', height: '80px' }} />
               </div>
             </div>
 
@@ -386,4 +386,3 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     </div>
   );
 }
-

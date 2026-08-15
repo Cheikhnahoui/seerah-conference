@@ -615,9 +615,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                   paddingTop: '2px',
                 }}
               >
-                ساحة الولاية
+              المركز الدولي للمؤتمرات
                 <br />
-                (كرفور المعرض)
+              (المختار ولد داداه)
               </p>
 
             </div>

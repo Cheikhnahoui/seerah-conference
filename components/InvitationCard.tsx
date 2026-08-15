@@ -509,7 +509,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
                 marginBottom: '6px',
               }}
             >
-              {`السيد(ة) ${attendee.full_name}`}
+              {attendee.full_name}
             </p>
 
             <p

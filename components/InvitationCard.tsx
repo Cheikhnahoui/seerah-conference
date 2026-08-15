@@ -258,7 +258,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         <div style={{ background: '#ffffff', padding: '10px 12px 10px', position: 'relative' }}>
 
           <p style={{
-            textAlign: 'center', color: '#1a1a1a', fontSize: '10px',
+            textAlign: 'center', color: '#1a1a1a', fontSize: '13px',
             fontFamily: 'Cairo, sans-serif', fontWeight: '700',
             marginBottom: '5px', lineHeight: 1.7,
           }}>
@@ -266,7 +266,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
           </p>
 
           <p style={{
-            textAlign: 'center', color: '#333', fontSize: '9.5px',
+            textAlign: 'center', color: '#333', fontSize: '12px',
             fontFamily: 'Cairo, sans-serif', marginBottom: '8px', lineHeight: 1.8,
           }}>
             {t('invitation_body')}
@@ -282,7 +282,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
             marginBottom: '8px',
           }}>
             <p dir="rtl" style={{
-              color: '#1a5c1a', fontSize: '9px', fontFamily: 'Cairo, sans-serif',
+              color: '#1a5c1a', fontSize: '11px', fontFamily: 'Cairo, sans-serif',
               marginBottom: '3px', fontWeight: '600',
             }}>
              {t('honor_text')}
@@ -369,7 +369,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
               background: '#fff', padding: '5px', borderRadius: '6px',
               border: '2px solid #2d6e2d', flexShrink: 0,
             }}>
-              <canvas ref={qrCanvasRef} width={75} height={75} style={{ display: 'block', width: '75px', height: '75px' }} />
+              <canvas ref={qrCanvasRef} width={55} height={55} style={{ display: 'block', width: '55px', height: '55px' }} />
             </div>
           </div>
         </div>

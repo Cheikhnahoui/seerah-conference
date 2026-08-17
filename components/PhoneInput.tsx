@@ -4,6 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import {
   getCountryOptions,
   formatAsYouType,
+  getPhoneExample,
   type CountryCode,
 } from '@/lib/phone';
 
@@ -37,6 +38,13 @@ export function PhoneInput({
 
   const countries = useMemo(() => getCountryOptions(lang), [lang]);
   const selected = countries.find((c) => c.code === country) || countries[0];
+
+  // Example number changes automatically whenever the country changes,
+  // sourced from libphonenumber-js's real per-country metadata.
+  const dynamicPlaceholder = useMemo(() => {
+    const example = getPhoneExample(country);
+    return placeholder || example || (lang === 'ar' ? 'رقم الهاتف' : 'Numéro de téléphone');
+  }, [country, placeholder, lang]);
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -72,17 +80,23 @@ export function PhoneInput({
   };
 
   return (
-    <div className="flex gap-2">
+    <div className="flex gap-2 w-full min-w-0">
       <input
         type="tel"
         inputMode="tel"
         value={value}
         onChange={(e) => handleTextChange(e.target.value)}
-        placeholder={placeholder}
+        placeholder={dynamicPlaceholder}
         disabled={disabled}
         className="input-islamic flex-1 px-4 py-3 rounded-xl text-base min-w-0"
+        style={{
+          textAlign: 'left',
+          fontFamily: 'monospace',
+          letterSpacing: '0.03em',
+          color: '#1a1a1a',
+          minHeight: '48px',
+        }}
         dir="ltr"
-        style={{ textAlign: 'left', fontFamily: 'monospace', letterSpacing: '0.03em', color: '#1a1a1a' }}
       />
 
       <div ref={containerRef} className="relative flex-shrink-0">
@@ -97,9 +111,11 @@ export function PhoneInput({
             color: 'var(--color-green)',
             fontFamily: 'monospace',
             cursor: disabled ? 'not-allowed' : 'pointer',
+            minHeight: '48px',
+            minWidth: '48px',
           }}
         >
-          <span>{selected?.flag}</span>
+          <span style={{ fontSize: '1.1em' }}>{selected?.flag}</span>
           <span dir="ltr">{selected?.dialCode}</span>
           <span style={{ fontSize: '10px' }}>▾</span>
         </button>
@@ -109,8 +125,9 @@ export function PhoneInput({
             className="absolute z-50 mt-1 rounded-xl overflow-hidden"
             style={{
               [lang === 'ar' ? 'right' : 'left']: 0,
-              width: 'min(85vw, 280px)',
-              maxHeight: '280px',
+              width: 'min(92vw, 300px)',
+              maxWidth: 'calc(100vw - 24px)',
+              maxHeight: '60vh',
               background: '#fff',
               border: '1px solid rgba(0,0,0,0.1)',
               boxShadow: '0 8px 24px rgba(0,0,0,0.18)',
@@ -122,25 +139,26 @@ export function PhoneInput({
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder={searchPlaceholder || (lang === 'ar' ? 'ابحث عن دولة...' : 'Rechercher un pays...')}
-              className="w-full px-3 py-2 text-sm outline-none"
-              style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a' }}
+              className="w-full px-3 py-3 text-sm outline-none"
+              style={{ borderBottom: '1px solid rgba(0,0,0,0.08)', color: '#1a1a1a', minHeight: '44px' }}
             />
-            <div style={{ overflowY: 'auto', maxHeight: '232px' }}>
+            <div style={{ overflowY: 'auto', maxHeight: 'calc(60vh - 48px)' }}>
               {filtered.map((c) => (
                 <button
                   key={c.code}
                   type="button"
                   onClick={() => handleCountrySelect(c.code)}
-                  className="w-full flex items-center gap-2 px-3 py-2 text-sm hover:bg-black/5"
+                  className="w-full flex items-center gap-2 px-3 py-2.5 text-sm hover:bg-black/5"
                   style={{
                     background: c.code === country ? 'rgba(201,168,76,0.12)' : undefined,
                     color: '#1a1a1a',
                     textAlign: lang === 'ar' ? 'right' : 'left',
+                    minHeight: '44px',
                   }}
                 >
-                  <span>{c.flag}</span>
+                  <span style={{ fontSize: '1.1em', flexShrink: 0 }}>{c.flag}</span>
                   <span className="flex-1 truncate">{c.name}</span>
-                  <span dir="ltr" style={{ color: '#888', fontFamily: 'monospace' }}>{c.dialCode}</span>
+                  <span dir="ltr" style={{ color: '#888', fontFamily: 'monospace', flexShrink: 0 }}>{c.dialCode}</span>
                 </button>
               ))}
               {filtered.length === 0 && (

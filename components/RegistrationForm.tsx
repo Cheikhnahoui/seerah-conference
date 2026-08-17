@@ -112,7 +112,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
             onChange={handlePhoneChange}
             lang={lang}
             disabled={loading}
-            placeholder={t('phone_example')}
           />
           {errors.phone_number && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{errors.phone_number}</p>}
         </div>

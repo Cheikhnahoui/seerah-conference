@@ -3,8 +3,10 @@ import {
   AsYouType,
   getCountries,
   getCountryCallingCode,
+  getExampleNumber,
   type CountryCode,
 } from 'libphonenumber-js';
+import examples from 'libphonenumber-js/examples.mobile.json';
 
 export type { CountryCode };
 
@@ -78,6 +80,27 @@ export function formatAsYouType(rawValue: string, country: CountryCode): string 
     return formatter.input(rawValue);
   } catch {
     return rawValue;
+  }
+}
+
+const exampleCache: Partial<Record<CountryCode, string>> = {};
+
+/**
+ * Returns a real, country-specific example number in national format
+ * (e.g. Mauritania -> "22 12 34 56", France -> "06 12 34 56 78",
+ * US -> "(201) 555-0123"), sourced from libphonenumber-js's official
+ * per-country metadata — never a hardcoded, one-size-fits-all example.
+ */
+export function getPhoneExample(country: CountryCode): string {
+  if (exampleCache[country] !== undefined) return exampleCache[country]!;
+  try {
+    const example = getExampleNumber(country, examples as any);
+    const formatted = example ? example.formatNational() : '';
+    exampleCache[country] = formatted;
+    return formatted;
+  } catch {
+    exampleCache[country] = '';
+    return '';
   }
 }
 

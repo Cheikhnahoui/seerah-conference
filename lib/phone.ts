@@ -44,7 +44,7 @@ export function getCountryOptions(lang: 'ar' | 'fr' = 'ar'): CountryOption[] {
   }
 
   const options: CountryOption[] = getCountries().map((iso2) => {
-    let name = iso2;
+    let name: string = iso2;
     try {
       name = displayNames?.of(iso2) || iso2;
     } catch {

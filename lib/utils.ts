@@ -2,6 +2,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import QRCode from 'qrcode';
 import * as crypto from 'crypto';
+import { parsePhoneNumberFromString } from 'libphonenumber-js';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -28,13 +29,39 @@ export async function generateQRCode(data: string): Promise<string> {
   }
 }
 
-export function formatPhoneNumber(phone: string): string {
-  return phone.replace(/\D/g, '');
+/**
+ * Validates a phone number internationally via libphonenumber-js.
+ * Expects an E.164 string (e.g. "+22222123456") as sent by the
+ * client-side PhoneInput component. Falls back to treating the
+ * number as Mauritanian if it has no leading "+", for compatibility
+ * with any older caller still sending bare digits.
+ */
+export function validatePhone(phone: string): boolean {
+  if (!phone) return false;
+  try {
+    const value = phone.trim().startsWith('+') ? phone.trim() : `+${phone.trim()}`;
+    const parsed = parsePhoneNumberFromString(value);
+    return !!parsed && parsed.isValid();
+  } catch {
+    return false;
+  }
 }
 
-export function validatePhone(phone: string): boolean {
-  const cleaned = formatPhoneNumber(phone);
-  return cleaned.length >= 9 && cleaned.length <= 15;
+/**
+ * Normalizes a phone number to strict E.164 (e.g. "+22222123456").
+ * If the number can't be parsed (shouldn't happen once it passed
+ * validatePhone), it falls back to a digits-only string so nothing
+ * ever throws.
+ */
+export function formatPhoneNumber(phone: string): string {
+  try {
+    const value = phone.trim().startsWith('+') ? phone.trim() : `+${phone.trim()}`;
+    const parsed = parsePhoneNumberFromString(value);
+    if (parsed && parsed.isValid()) return parsed.number;
+  } catch {
+    // fall through
+  }
+  return phone.replace(/\D/g, '');
 }
 
 export function validateName(name: string): boolean {

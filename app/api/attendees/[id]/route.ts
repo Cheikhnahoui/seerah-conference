@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
-import { verifyAdminToken } from '@/lib/utils';
+import { verifyAdminToken, validatePhone } from '@/lib/utils';
 
 export async function GET(
   request: NextRequest,
@@ -43,6 +43,14 @@ export async function PUT(
 
     const { id } = await params;
     const body = await request.json();
+
+    // The admin PhoneInput always sends E.164, but validate here too
+    // so a malformed/invalid number can never be saved regardless of
+    // where the request came from.
+    if (body.phone_number && !validatePhone(body.phone_number)) {
+      return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
+    }
+
     const supabase = createServerSupabase();
 
     const { data, error } = await supabase

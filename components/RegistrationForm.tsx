@@ -3,7 +3,8 @@
 import { useState } from 'react';
 import { Attendee, AttendeeFormData } from '@/types';
 import { validateName } from '@/lib/utils';
-import { MAURITANIA_CONFIG, validateMauritanianPhone, formatMauritanianPhone } from '@/lib/mauritania';
+import { toE164, isValidPhoneForCountry, DEFAULT_COUNTRY, type CountryCode } from '@/lib/phone';
+import { PhoneInput } from '@/components/PhoneInput';
 import { useLang } from '@/lib/i18n';
 
 interface RegistrationFormProps {
@@ -11,11 +12,12 @@ interface RegistrationFormProps {
 }
 
 export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
-  const { t } = useLang();
+  const { t, lang } = useLang();
   const [formData, setFormData] = useState<AttendeeFormData>({
     full_name: '', phone_number: '', city: '', occupation: '',
   });
   const [phoneLocal, setPhoneLocal] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [errors, setErrors] = useState<Partial<AttendeeFormData & { phone_number: string }>>({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
@@ -23,7 +25,9 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const validate = (): boolean => {
     const newErrors: Partial<AttendeeFormData & { phone_number: string }> = {};
     if (!validateName(formData.full_name)) newErrors.full_name = t('full_name_error');
-    if (!validateMauritanianPhone(phoneLocal)) newErrors.phone_number = `${t('phone_error')} — ${t('phone_example')}`;
+    if (!isValidPhoneForCountry(phoneLocal, phoneCountry)) {
+      newErrors.phone_number = t('phone_error');
+    }
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -32,23 +36,28 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
     setFormData({ ...formData, full_name: value.replace(/[0-9]/g, '') });
   };
 
-  const handlePhoneChange = (value: string) => {
-    const digitsOnly = value.replace(/[^\d]/g, '');
-    if (digitsOnly.length > 0 && !['2', '3', '4'].includes(digitsOnly[0])) return;
-    setPhoneLocal(digitsOnly);
-    setFormData({ ...formData, phone_number: formatMauritanianPhone(digitsOnly) });
+  const handlePhoneChange = (value: string, country: CountryCode) => {
+    setPhoneLocal(value);
+    setPhoneCountry(country);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validate()) return;
+
+    const e164 = toE164(phoneLocal, phoneCountry);
+    if (!e164) {
+      setErrors((prev) => ({ ...prev, phone_number: t('phone_error') }));
+      return;
+    }
+
     setLoading(true);
     setServerError('');
     try {
       const response = await fetch('/api/attendees', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, phone_number: formatMauritanianPhone(phoneLocal) }),
+        body: JSON.stringify({ ...formData, phone_number: e164 }),
       });
       const result = await response.json();
       if (result.success) {
@@ -97,20 +106,15 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
             {t('phone')} <span style={{ color: 'var(--color-gold)' }}>*</span>
           </label>
-          <div className="flex gap-2">
-            <input type="tel" value={phoneLocal}
-              onChange={(e) => handlePhoneChange(e.target.value)}
-              placeholder="XX XX XX XX"
-              className="input-islamic flex-1 px-4 py-3 rounded-xl text-base"
-              dir="ltr" style={{ textAlign: 'left', fontFamily: 'monospace', letterSpacing: '0.05em', color: '#1a1a1a' }}
-              disabled={loading} maxLength={8} />
-            <div className="flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-bold flex-shrink-0"
-              style={{ background: 'rgba(26, 92, 42, 0.1)', border: '1.5px solid rgba(26, 92, 42, 0.4)', color: 'var(--color-green)', fontFamily: 'monospace' }}>
-              <span>222+</span><span>MR</span>
-            </div>
-          </div>
+          <PhoneInput
+            value={phoneLocal}
+            country={phoneCountry}
+            onChange={handlePhoneChange}
+            lang={lang}
+            disabled={loading}
+            placeholder={t('phone_example')}
+          />
           {errors.phone_number && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{errors.phone_number}</p>}
-          <p className="text-xs mt-1" style={{ color: '#888888' }}>{t('phone_example')}</p>
         </div>
 
         {/* City */}

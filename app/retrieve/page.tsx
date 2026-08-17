@@ -4,13 +4,15 @@ import { useState } from 'react';
 import { Attendee } from '@/types';
 import { InvitationCard } from '@/components/InvitationCard';
 import { IslamicPattern } from '@/components/ui/IslamicPattern';
-import { MAURITANIA_CONFIG, formatMauritanianPhone } from '@/lib/mauritania';
+import { PhoneInput } from '@/components/PhoneInput';
+import { toE164, DEFAULT_COUNTRY, type CountryCode } from '@/lib/phone';
 import Link from 'next/link';
 import { LangProvider, LangToggle, useLang } from '@/lib/i18n';
 
 function RetrieveContent() {
   const { t, lang } = useLang();
   const [phoneLocal, setPhoneLocal] = useState('');
+  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
   const [loading, setLoading] = useState(false);
   const [attendee, setAttendee] = useState<Attendee | null>(null);
   const [error, setError] = useState('');
@@ -18,13 +20,18 @@ function RetrieveContent() {
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!phoneLocal.trim()) return;
+
+    const e164 = toE164(phoneLocal, phoneCountry);
+    if (!e164) {
+      setError(t('phone_error'));
+      return;
+    }
+
     setLoading(true);
     setError('');
     setAttendee(null);
     try {
-      const fullPhone = formatMauritanianPhone(phoneLocal);
-      const digits = fullPhone.replace(/\D/g, '');
-      const response = await fetch(`/api/retrieve?phone=${digits}`);
+      const response = await fetch(`/api/retrieve?phone=${encodeURIComponent(e164)}`);
       const result = await response.json();
       if (result.success && result.data) {
         setAttendee(result.data);
@@ -70,19 +77,13 @@ function RetrieveContent() {
                 <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
                   {t('retrieve_phone_label')}
                 </label>
-                <div className="flex gap-2">
-                  <div className="flex items-center gap-1.5 px-3 py-3 rounded-xl text-sm font-bold flex-shrink-0"
-                    style={{ background: 'rgba(201, 168, 76, 0.15)', border: '1px solid rgba(201, 168, 76, 0.4)', color: 'var(--color-gold)', fontFamily: 'monospace' }}>
-                    <span>{MAURITANIA_CONFIG.countryFlag}</span>
-                    <span>{MAURITANIA_CONFIG.countryCode}</span>
-                  </div>
-                  <input type="tel" value={phoneLocal}
-                    onChange={(e) => setPhoneLocal(e.target.value.replace(/[^\d\s\-]/g, ''))}
-                    placeholder="XX XX XX XX"
-                    className="input-islamic flex-1 px-4 py-3 rounded-xl text-base"
-                    dir="ltr" style={{ textAlign: 'left', fontFamily: 'monospace' }}
-                    maxLength={12} />
-                </div>
+                <PhoneInput
+                  value={phoneLocal}
+                  country={phoneCountry}
+                  onChange={(value, country) => { setPhoneLocal(value); setPhoneCountry(country); }}
+                  lang={lang}
+                  disabled={loading}
+                />
               </div>
 
               {error && <div className="alert-error rounded-xl p-4 text-center text-sm">{error}</div>}

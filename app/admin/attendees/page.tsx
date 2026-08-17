@@ -3,6 +3,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Attendee } from '@/types';
 import { formatDate, exportToCSV } from '@/lib/utils';
+import { PhoneInput } from '@/components/PhoneInput';
+import {
+  toE164,
+  splitPhoneForEditing,
+  formatForDisplay,
+  DEFAULT_COUNTRY,
+  type CountryCode,
+} from '@/lib/phone';
+
+interface EditForm {
+  full_name: string;
+  phone_local: string;
+  phone_country: CountryCode;
+  city: string;
+  occupation: string;
+}
 
 export default function AttendeesPage() {
   const [attendees, setAttendees] = useState<Attendee[]>([]);
@@ -12,7 +28,10 @@ export default function AttendeesPage() {
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState({ full_name: '', phone_number: '', city: '', occupation: '' });
+  const [editForm, setEditForm] = useState<EditForm>({
+    full_name: '', phone_local: '', phone_country: DEFAULT_COUNTRY, city: '', occupation: '',
+  });
+  const [editPhoneError, setEditPhoneError] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
   const limit = 20;
@@ -85,15 +104,36 @@ export default function AttendeesPage() {
 
   const startEdit = (a: Attendee) => {
     setEditingId(a.id);
-    setEditForm({ full_name: a.full_name, phone_number: a.phone_number, city: a.city || '', occupation: a.occupation || '' });
+    setEditPhoneError('');
+    const { country, national } = splitPhoneForEditing(a.phone_number);
+    setEditForm({
+      full_name: a.full_name,
+      phone_local: national,
+      phone_country: country,
+      city: a.city || '',
+      occupation: a.occupation || '',
+    });
   };
 
   const saveEdit = async () => {
     if (!editingId) return;
+
+    const e164 = toE164(editForm.phone_local, editForm.phone_country);
+    if (!e164) {
+      setEditPhoneError('رقم هاتف غير صالح');
+      return;
+    }
+    setEditPhoneError('');
+
     const response = await fetch(`/api/attendees/${editingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-      body: JSON.stringify(editForm),
+      body: JSON.stringify({
+        full_name: editForm.full_name,
+        phone_number: e164,
+        city: editForm.city,
+        occupation: editForm.occupation,
+      }),
     });
     if ((await response.json()).success) { setEditingId(null); fetchAttendees(); }
   };
@@ -102,7 +142,7 @@ export default function AttendeesPage() {
     const exportData = attendees.map((a) => ({
       'رقم التسجيل': a.registration_number,
       'الاسم الكامل': a.full_name,
-      'رقم الهاتف': a.phone_number,
+      'رقم الهاتف': formatForDisplay(a.phone_number),
       'المدينة': a.city || '',
       'الصفة أو الوظيفة': a.occupation || '',
       'حالة الحضور': a.attendance_status === 'attended' ? 'حاضر' : 'مسجل',
@@ -117,7 +157,7 @@ export default function AttendeesPage() {
     const data = attendees.map((a) => ({
       'رقم التسجيل': a.registration_number,
       'الاسم الكامل': a.full_name,
-      'رقم الهاتف': a.phone_number,
+      'رقم الهاتف': formatForDisplay(a.phone_number),
       'المدينة': a.city || '',
       'الصفة أو الوظيفة': a.occupation || '',
       'حالة الحضور': a.attendance_status === 'attended' ? 'حاضر' : 'مسجل',
@@ -213,8 +253,15 @@ export default function AttendeesPage() {
                           <td className="text-xs" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>{a.registration_number}</td>
                           <td><input value={editForm.full_name} onChange={(e) => setEditForm({ ...editForm, full_name: e.target.value })}
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
-                          <td><input value={editForm.phone_number} onChange={(e) => setEditForm({ ...editForm, phone_number: e.target.value })}
-                            className="input-islamic px-2 py-1 rounded-lg text-sm w-full" dir="ltr" /></td>
+                          <td style={{ minWidth: '220px' }}>
+                            <PhoneInput
+                              value={editForm.phone_local}
+                              country={editForm.phone_country}
+                              onChange={(value, country) => setEditForm({ ...editForm, phone_local: value, phone_country: country })}
+                              lang="ar"
+                            />
+                            {editPhoneError && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{editPhoneError}</p>}
+                          </td>
                           <td><input value={editForm.city} onChange={(e) => setEditForm({ ...editForm, city: e.target.value })}
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
                           <td><input value={editForm.occupation} onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })}
@@ -225,7 +272,7 @@ export default function AttendeesPage() {
                           <td><div className="flex gap-1">
                             <button onClick={saveEdit} className="px-3 py-1 rounded-lg text-xs font-medium"
                               style={{ background: 'rgba(45, 122, 95, 0.3)', color: '#6ee7b7' }}>حفظ</button>
-                            <button onClick={() => setEditingId(null)} className="px-3 py-1 rounded-lg text-xs font-medium"
+                            <button onClick={() => { setEditingId(null); setEditPhoneError(''); }} className="px-3 py-1 rounded-lg text-xs font-medium"
                               style={{ background: 'rgba(255,255,255,0.05)', color: 'rgba(240,230,208,0.5)' }}>إلغاء</button>
                           </div></td>
                         </>
@@ -237,7 +284,7 @@ export default function AttendeesPage() {
                           </td>
                           <td className="text-xs font-mono" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>{a.registration_number}</td>
                           <td className="font-medium">{a.full_name}</td>
-                          <td dir="ltr" className="text-right">{a.phone_number.replace(/^222/, '')}</td>
+                          <td dir="ltr" className="text-right">{formatForDisplay(a.phone_number)}</td>
                           <td>{a.city || '—'}</td>
                           <td className="text-xs">{a.occupation || '—'}</td>
                           <td><span className={`px-2 py-1 rounded-full text-xs ${a.attendance_status === 'attended' ? 'badge-attended' : 'badge-registered'}`}>

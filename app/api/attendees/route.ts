@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
     }
 
+    // Client sends E.164 (e.g. "+22222123456"); this is now stored as-is.
     const cleanedPhone = formatPhoneNumber(phone_number);
 
     // Rate limit key = IP + phone → each person blocked independently
@@ -50,10 +51,14 @@ export async function POST(request: NextRequest) {
     }
     const supabase = createServerSupabase();
 
+    // Check for a duplicate against both the modern E.164 form and the
+    // legacy digits-only form (no leading "+") that older records may
+    // still use, so we never miss an existing registration.
+    const legacyDigits = cleanedPhone.replace(/^\+/, '');
     const { data: existing } = await supabase
       .from('attendees')
       .select('id, registration_number')
-      .eq('phone_number', cleanedPhone)
+      .or(`phone_number.eq.${cleanedPhone},phone_number.eq.${legacyDigits}`)
       .maybeSingle();
 
     if (existing) {

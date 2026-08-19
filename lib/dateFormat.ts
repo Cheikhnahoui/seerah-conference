@@ -1,23 +1,12 @@
 /**
- * Automatic bilingual (Arabic / French) conference-date formatting.
+ * Automatic bilingual (Arabic / French) conference-date handling.
  *
- * The admin enters the date as STRUCTURED NUMBERS (day range, month,
- * year — Hijri and Gregorian). Both the Arabic and the French display
- * strings are generated from those numbers, so they can never
- * disagree with each other again.
+ * The admin types the date as plain TEXT, once per calendar
+ * (Hijri and Gregorian) — e.g. "21 – 23 ربيع الأول 1448هـ". The
+ * French version is generated automatically by translating the
+ * month name (and the "هـ"/"م" markers) found inside that text, so
+ * numbers, dashes, and spacing are preserved exactly as typed.
  */
-
-export interface ConfDateParts {
-  hijri_day_start: number;
-  hijri_day_end: number;
-  hijri_month: number; // 1-12
-  hijri_year: number;
-
-  greg_day_start: number;
-  greg_day_end: number;
-  greg_month: number; // 1-12
-  greg_year: number;
-}
 
 export const HIJRI_MONTHS: { ar: string; fr: string }[] = [
   { ar: 'محرم', fr: 'Mouharram' },
@@ -30,7 +19,7 @@ export const HIJRI_MONTHS: { ar: string; fr: string }[] = [
   { ar: 'شعبان', fr: 'Chaabane' },
   { ar: 'رمضان', fr: 'Ramadan' },
   { ar: 'شوال', fr: 'Chawwal' },
-  { ar: 'ذو القعدة', fr: 'Dhou al-Qi\'da' },
+  { ar: 'ذو القعدة', fr: "Dhou al-Qi'da" },
   { ar: 'ذو الحجة', fr: 'Dhou al-Hijja' },
 ];
 
@@ -49,34 +38,36 @@ export const GREGORIAN_MONTHS: { ar: string; fr: string }[] = [
   { ar: 'ديسمبر', fr: 'décembre' },
 ];
 
-export function formatConfDate(
-  parts: Partial<ConfDateParts> | undefined | null,
-  lang: 'ar' | 'fr'
-): string {
-  if (
-    !parts ||
-    !parts.hijri_month ||
-    !parts.greg_month ||
-    !parts.hijri_day_start ||
-    !parts.greg_day_start
-  ) {
-    return '';
-  }
+/**
+ * Translates any free-text Arabic date string into French by:
+ *  - replacing the Hijri/Gregorian month name (if found) with its
+ *    French equivalent,
+ *  - replacing the "هـ" (Hijri year marker) with "H",
+ *  - dropping the trailing "م" (Gregorian year marker) since French
+ *    years don't take one.
+ * Numbers, dashes ("–"/"-") and spacing are left exactly as typed.
+ */
+export function translateDateText(arabicText: string): string {
+  if (!arabicText) return '';
 
-  const hijriMonth = HIJRI_MONTHS[parts.hijri_month - 1];
-  const gregMonth = GREGORIAN_MONTHS[parts.greg_month - 1];
+  let result = arabicText;
 
-  if (!hijriMonth || !gregMonth) return '';
-
-  if (lang === 'ar') {
-    return (
-      `${parts.hijri_day_start} – ${parts.hijri_day_end} ${hijriMonth.ar} ${parts.hijri_year}هـ` +
-      ` الموافق ${parts.greg_day_start} – ${parts.greg_day_end} ${gregMonth.ar} ${parts.greg_year}م`
-    );
-  }
-
-  return (
-    `${parts.hijri_day_start}-${parts.hijri_day_end} ${hijriMonth.fr} ${parts.hijri_year}H` +
-    ` (${parts.greg_day_start}-${parts.greg_day_end} ${gregMonth.fr} ${parts.greg_year})`
+  const allMonths = [...HIJRI_MONTHS, ...GREGORIAN_MONTHS].sort(
+    (a, b) => b.ar.length - a.ar.length
   );
+
+  for (const m of allMonths) {
+    result = result.split(m.ar).join(m.fr);
+  }
+
+  result = result.replace(/هـ/g, 'H');
+  // Drop a standalone Gregorian "م" marker right after a year, e.g. "2026م" -> "2026"
+  result = result.replace(/(\d)\s*م(?![\p{L}])/gu, '$1');
+
+  return result.trim();
+}
+
+/** Returns true if the text still contains Arabic letters after translation. */
+export function hasUntranslatedArabic(text: string): boolean {
+  return /[\u0600-\u06FF]/.test(text);
 }

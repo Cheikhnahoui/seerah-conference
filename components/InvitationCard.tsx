@@ -3,7 +3,7 @@
 import { useRef, useState, useEffect } from 'react';
 import { Attendee } from '@/types';
 import { useLang } from '@/lib/i18n';
-import { ConfDateParts, formatConfDate } from '@/lib/dateFormat';
+import { translateDateText } from '@/lib/dateFormat';
 import { translateLocation } from '@/lib/venueTranslations';
 
 interface InvitationCardProps {
@@ -11,10 +11,12 @@ interface InvitationCardProps {
 }
 
 let configCache:
-  | (Partial<ConfDateParts> & {
+  | {
+      conf_date_hijri?: string;
+      conf_date_gregorian?: string;
       conf_location?: string;
       conf_name?: string;
-    })
+    }
   | null = null;
 
 let configPromise: Promise<void> | null = null;
@@ -44,16 +46,8 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
 
   const [downloading, setDownloading] = useState(false);
 
-  const [dateParts, setDateParts] = useState<Partial<ConfDateParts>>({
-    hijri_day_start: 21,
-    hijri_day_end: 23,
-    hijri_month: 3,
-    hijri_year: 1448,
-    greg_day_start: 4,
-    greg_day_end: 6,
-    greg_month: 9,
-    greg_year: 2026,
-  });
+  const [confDateHijri, setConfDateHijri] = useState('21 – 23 ربيع الأول 1448هـ');
+  const [confDateGregorian, setConfDateGregorian] = useState('4 – 6 سبتمبر 2026م');
   const [confLocationAr, setConfLocationAr] = useState(
     'المركز الدولي للمؤتمرات (المختار ولد داداه)'
   );
@@ -62,16 +56,13 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   useEffect(() => {
     loadConfig().then(() => {
       if (configCache) {
-        setDateParts(prev => ({
-          hijri_day_start: configCache?.hijri_day_start ?? prev.hijri_day_start,
-          hijri_day_end: configCache?.hijri_day_end ?? prev.hijri_day_end,
-          hijri_month: configCache?.hijri_month ?? prev.hijri_month,
-          hijri_year: configCache?.hijri_year ?? prev.hijri_year,
-          greg_day_start: configCache?.greg_day_start ?? prev.greg_day_start,
-          greg_day_end: configCache?.greg_day_end ?? prev.greg_day_end,
-          greg_month: configCache?.greg_month ?? prev.greg_month,
-          greg_year: configCache?.greg_year ?? prev.greg_year,
-        }));
+        if (configCache.conf_date_hijri) {
+          setConfDateHijri(configCache.conf_date_hijri);
+        }
+
+        if (configCache.conf_date_gregorian) {
+          setConfDateGregorian(configCache.conf_date_gregorian);
+        }
 
         if (configCache.conf_location) {
           setConfLocationAr(configCache.conf_location);
@@ -85,8 +76,11 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   }, []);
 
   // Both the Arabic and French text on the card are derived from the
-  // same structured data, so they can never disagree.
-  const displayDate = formatConfDate(dateParts, lang);
+  // same source text, so they can never disagree.
+  const displayDate =
+    lang === 'fr'
+      ? `${translateDateText(confDateHijri)} (${translateDateText(confDateGregorian)})`
+      : `${confDateHijri} الموافق ${confDateGregorian}`;
   const displayLocation =
     lang === 'fr' ? translateLocation(confLocationAr) : confLocationAr;
 

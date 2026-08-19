@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { translateDateText } from '@/lib/dateFormat';
 import { translateLocation } from '@/lib/venueTranslations';
 
@@ -25,21 +26,36 @@ const EMPTY_CONFIG: Config = {
 };
 
 export default function SettingsPage() {
+  const router = useRouter();
   const [config, setConfig] = useState<Config>(EMPTY_CONFIG);
   const [loading, setLoading] = useState(true);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
   const getToken = () => localStorage.getItem('admin_token') || '';
 
+  // Guard: if there is no admin token at all, bounce back to the login
+  // page immediately instead of showing the settings form to anyone
+  // who simply visits the URL.
   useEffect(() => {
+    const token = getToken();
+    if (!token) {
+      router.replace('/admin');
+      return;
+    }
+    setCheckingAuth(false);
+  }, [router]);
+
+  useEffect(() => {
+    if (checkingAuth) return;
     fetch('/api/config')
       .then((r) => r.json())
       .then((d) => {
         if (d.success) setConfig({ ...EMPTY_CONFIG, ...d.data });
       })
       .finally(() => setLoading(false));
-  }, []);
+  }, [checkingAuth]);
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -65,6 +81,9 @@ export default function SettingsPage() {
       const data = await response.json();
       if (data.success) {
         setMessage('✅ تم حفظ الإعدادات بنجاح');
+      } else if (response.status === 401) {
+        router.replace('/admin');
+        return;
       } else {
         setMessage('❌ حدث خطأ أثناء الحفظ');
       }
@@ -74,7 +93,7 @@ export default function SettingsPage() {
     }
   };
 
-  if (loading) {
+  if (checkingAuth || loading) {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="spinner" />

@@ -49,14 +49,24 @@ export default function AdminLoginPage() {
       style={{ background: 'var(--color-bg)' }}
       dir="rtl"
     >
-      <div
-        className="w-full max-w-md rounded-2xl p-6 md:p-10"
-        style={{
-          background: '#ffffff',
-          border: '1px solid rgba(184, 134, 11, 0.25)',
-          boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
-        }}
-      >
+      <div className="w-full max-w-md">
+        <a
+          href="/"
+          className="inline-flex items-center gap-2 text-sm mb-4 hover:opacity-80 transition-opacity"
+          style={{ color: 'var(--color-green-dark)' }}
+        >
+          <span>→</span>
+          <span>العودة للصفحة الرئيسية</span>
+        </a>
+
+        <div
+          className="w-full rounded-2xl p-6 md:p-10"
+          style={{
+            background: '#ffffff',
+            border: '1px solid rgba(184, 134, 11, 0.25)',
+            boxShadow: '0 4px 24px rgba(0,0,0,0.08)',
+          }}
+        >
         <div className="text-center mb-8">
           <h1
             className="text-2xl font-bold mb-2"
@@ -126,6 +136,7 @@ export default function AdminLoginPage() {
             )}
           </button>
         </form>
+        </div>
       </div>
     </div>
   );

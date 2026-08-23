@@ -66,6 +66,15 @@ export default function AttendeesPage() {
     if ((await response.json()).success) fetchAttendees();
   };
 
+  const handleApproval = async (id: string, approval_status: 'approved' | 'rejected') => {
+    const response = await fetch(`/api/attendees/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+      body: JSON.stringify({ approval_status }),
+    });
+    if ((await response.json()).success) fetchAttendees();
+  };
+
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} مشارك؟ لا يمكن التراجع عن هذا الإجراء.`)) return;
@@ -239,6 +248,7 @@ export default function AttendeesPage() {
                     <th>الهاتف</th>
                     <th>المدينة</th>
                     <th>الصفة</th>
+                    <th>الموافقة</th>
                     <th>الحالة</th>
                     <th>التاريخ</th>
                     <th>إجراءات</th>
@@ -266,6 +276,7 @@ export default function AttendeesPage() {
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
                           <td><input value={editForm.occupation} onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })}
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
+                          <td>{approvalBadge((a as any).approval_status)}</td>
                           <td><span className={`px-2 py-1 rounded-full text-xs ${a.attendance_status === 'attended' ? 'badge-attended' : 'badge-registered'}`}>
                             {a.attendance_status === 'attended' ? '✅ حاضر' : '🕐 مسجل'}</span></td>
                           <td className="text-xs" style={{ color: '#333333' }}>{formatDate(a.registration_date)}</td>
@@ -287,10 +298,23 @@ export default function AttendeesPage() {
                           <td dir="ltr" className="text-right">{formatForDisplay(a.phone_number)}</td>
                           <td>{a.city || '—'}</td>
                           <td className="text-xs">{a.occupation || '—'}</td>
+                          <td>{approvalBadge((a as any).approval_status)}</td>
                           <td><span className={`px-2 py-1 rounded-full text-xs ${a.attendance_status === 'attended' ? 'badge-attended' : 'badge-registered'}`}>
                             {a.attendance_status === 'attended' ? '✅ حاضر' : '🕐 مسجل'}</span></td>
                           <td className="text-xs" style={{ color: '#333333' }}>{formatDate(a.registration_date)}</td>
-                          <td><div className="flex gap-1">
+                          <td><div className="flex gap-1 flex-wrap">
+                            {(a as any).approval_status !== 'approved' && (
+                              <button onClick={() => handleApproval(a.id, 'approved')} className="px-3 py-1 rounded-lg text-xs font-medium"
+                                style={{ background: 'rgba(45, 122, 95, 0.2)', border: '1px solid rgba(45, 122, 95, 0.4)', color: '#1a5c2a' }}>
+                                ✅ موافقة
+                              </button>
+                            )}
+                            {(a as any).approval_status !== 'rejected' && (
+                              <button onClick={() => handleApproval(a.id, 'rejected')} className="px-3 py-1 rounded-lg text-xs font-medium"
+                                style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#dc2626' }}>
+                                ❌ رفض
+                              </button>
+                            )}
                             <button onClick={() => startEdit(a)} className="px-3 py-1 rounded-lg text-xs"
                               style={{ background: 'rgba(201, 168, 76, 0.15)', color: 'var(--color-gold)' }}>✏️</button>
                             <button onClick={() => handleDelete(a.id)} className="px-3 py-1 rounded-lg text-xs"
@@ -320,5 +344,27 @@ export default function AttendeesPage() {
         </div>
       )}
     </div>
+  );
+}
+
+function approvalBadge(status: string | undefined) {
+  if (status === 'approved') {
+    return (
+      <span className="px-2 py-1 rounded-full text-xs" style={{ background: 'rgba(45,122,95,0.2)', color: '#1a5c2a' }}>
+        ✅ مقبول
+      </span>
+    );
+  }
+  if (status === 'rejected') {
+    return (
+      <span className="px-2 py-1 rounded-full text-xs" style={{ background: 'rgba(239,68,68,0.15)', color: '#dc2626' }}>
+        ❌ مرفوض
+      </span>
+    );
+  }
+  return (
+    <span className="px-2 py-1 rounded-full text-xs" style={{ background: 'rgba(201,168,76,0.15)', color: 'var(--color-gold)' }}>
+      ⏳ قيد الانتظار
+    </span>
   );
 }

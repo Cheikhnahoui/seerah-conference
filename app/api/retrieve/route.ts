@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     // Never expose the full attendee list to the public
     const { data, error } = await supabase
       .from('attendees')
-      .select('id, registration_number, full_name, phone_number, city, qr_code, attendance_status, registration_date, attendance_date')
+      .select('id, registration_number, full_name, phone_number, city, qr_code, attendance_status, approval_status, registration_date, attendance_date')
       .or(orFilter)
       .maybeSingle();
 
@@ -45,10 +45,27 @@ export async function GET(request: NextRequest) {
     }
 
     if (!data) {
-      return NextResponse.json({ success: false, error: 'لم يتم العثور على تسجيل بهذا الرقم' }, { status: 404 });
+      return NextResponse.json(
+        { success: false, status: 'not_found', error: 'Aucune invitation trouvée pour ce numéro.' },
+        { status: 404 }
+      );
     }
 
-    return NextResponse.json({ success: true, data });
+    if (data.approval_status === 'pending') {
+      return NextResponse.json(
+        { success: false, status: 'pending', error: 'Votre demande est encore en cours de validation.' },
+        { status: 403 }
+      );
+    }
+
+    if (data.approval_status === 'rejected') {
+      return NextResponse.json(
+        { success: false, status: 'rejected', error: "Votre demande n'a pas été validée." },
+        { status: 403 }
+      );
+    }
+
+    return NextResponse.json({ success: true, status: 'approved', data });
   } catch (error) {
     console.error('Retrieve error:', error);
     return NextResponse.json({ success: false, error: 'خطأ داخلي' }, { status: 500 });

@@ -80,6 +80,7 @@ export async function POST(request: NextRequest) {
         occupation: occupation?.trim() || null,
         qr_code: null,
         attendance_status: 'registered',
+        approval_status: 'pending',
         registration_date: new Date().toISOString(),
       })
       .select()
@@ -115,7 +116,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('attendees')
-      .select('id, registration_number, full_name, phone_number, city, occupation, attendance_status, registration_date, attendance_date, created_at', { count: 'exact' })
+      .select('id, registration_number, full_name, phone_number, city, occupation, attendance_status, approval_status, registration_date, attendance_date, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 

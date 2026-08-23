@@ -51,17 +51,28 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
     }
 
+    if (
+      body.approval_status &&
+      !['pending', 'approved', 'rejected'].includes(body.approval_status)
+    ) {
+      return NextResponse.json({ success: false, error: 'حالة موافقة غير صالحة' }, { status: 400 });
+    }
+
     const supabase = createServerSupabase();
+
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
+    };
+
+    if (body.full_name !== undefined) updateData.full_name = body.full_name;
+    if (body.phone_number !== undefined) updateData.phone_number = body.phone_number;
+    if (body.city !== undefined) updateData.city = body.city;
+    if (body.occupation !== undefined) updateData.occupation = body.occupation;
+    if (body.approval_status !== undefined) updateData.approval_status = body.approval_status;
 
     const { data, error } = await supabase
       .from('attendees')
-      .update({
-        full_name: body.full_name,
-        phone_number: body.phone_number,
-        city: body.city,
-        occupation: body.occupation,
-        updated_at: new Date().toISOString(),
-      })
+      .update(updateData)
       .eq('id', id)
       .select()
       .single();

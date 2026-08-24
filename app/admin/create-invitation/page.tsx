@@ -15,6 +15,7 @@ export default function CreateInvitationPage() {
   const [fullName, setFullName] = useState('');
   const [phoneLocal, setPhoneLocal] = useState('');
   const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
+  const [noPhone, setNoPhone] = useState(false);
   const [city, setCity] = useState('');
   const [occupation, setOccupation] = useState('');
 
@@ -36,7 +37,7 @@ export default function CreateInvitationPage() {
   const validate = (): boolean => {
     const newErrors: { full_name?: string; phone?: string } = {};
     if (!validateName(fullName)) newErrors.full_name = 'الرجاء إدخال الاسم الكامل (3 أحرف على الأقل)';
-    if (!isValidPhoneForCountry(phoneLocal, phoneCountry)) newErrors.phone = 'رقم هاتف غير صالح';
+    if (!noPhone && !isValidPhoneForCountry(phoneLocal, phoneCountry)) newErrors.phone = 'رقم هاتف غير صالح';
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -45,10 +46,13 @@ export default function CreateInvitationPage() {
     e.preventDefault();
     if (!validate()) return;
 
-    const e164 = toE164(phoneLocal, phoneCountry);
-    if (!e164) {
-      setErrors((prev) => ({ ...prev, phone: 'رقم هاتف غير صالح' }));
-      return;
+    let e164: string | null = null;
+    if (!noPhone) {
+      e164 = toE164(phoneLocal, phoneCountry);
+      if (!e164) {
+        setErrors((prev) => ({ ...prev, phone: 'رقم هاتف غير صالح' }));
+        return;
+      }
     }
 
     setLoading(true);
@@ -59,7 +63,7 @@ export default function CreateInvitationPage() {
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
         body: JSON.stringify({
           full_name: fullName,
-          phone_number: e164,
+          phone_number: noPhone ? '' : e164,
           city,
           occupation,
         }),
@@ -133,16 +137,34 @@ export default function CreateInvitationPage() {
 
             <div>
               <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-                رقم الهاتف <span style={{ color: 'var(--color-gold)' }}>*</span>
+                رقم الهاتف {!noPhone && <span style={{ color: 'var(--color-gold)' }}>*</span>}
               </label>
-              <PhoneInput
-                value={phoneLocal}
-                country={phoneCountry}
-                onChange={(value, country) => { setPhoneLocal(value); setPhoneCountry(country); }}
-                lang="ar"
-                disabled={loading}
-              />
+              {!noPhone && (
+                <PhoneInput
+                  value={phoneLocal}
+                  country={phoneCountry}
+                  onChange={(value, country) => { setPhoneLocal(value); setPhoneCountry(country); }}
+                  lang="ar"
+                  disabled={loading}
+                />
+              )}
               {errors.phone && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{errors.phone}</p>}
+
+              <label className="flex items-center gap-2 mt-2 text-sm" style={{ color: '#555555' }}>
+                <input
+                  type="checkbox"
+                  checked={noPhone}
+                  onChange={(e) => { setNoPhone(e.target.checked); setErrors((prev) => ({ ...prev, phone: undefined })); }}
+                  disabled={loading}
+                  style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <span>لا أعرف رقم هاتف هذا الشخص</span>
+              </label>
+              {noPhone && (
+                <p className="text-xs mt-1" style={{ color: '#888888' }}>
+                  ستُنشأ له بطاقة دعوة وQR فريد ويظهر في قائمة المشاركين، لكنه لن يستطيع استرجاع دعوته بنفسه لاحقاً (بما أنه لا يوجد رقم للبحث به) — سلّمه البطاقة مباشرة.
+                </p>
+              )}
             </div>
 
             <div>

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken } from '@/lib/utils';
+import { generatePlaceholderPhone } from '@/lib/phone';
 
 /**
  * Admin-only endpoint to create an invitation directly from the admin
@@ -8,6 +9,13 @@ import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNum
  * "pending" WhatsApp-verification step entirely — the admin is
  * creating it themselves, so the identity is already known — and the
  * attendee is saved as immediately 'approved'.
+ *
+ * The phone number is OPTIONAL here: for guests whose number isn't
+ * known yet, a unique internal placeholder is generated instead so
+ * the person still gets a real, unique QR code and appears in the
+ * attendee list like everyone else. They simply won't be able to
+ * self-retrieve their invitation later (there's no real number for
+ * them to search with) — the admin hands it to them directly.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -23,27 +31,35 @@ export async function POST(request: NextRequest) {
     if (!validateName(full_name)) {
       return NextResponse.json({ success: false, error: 'اسم غير صالح' }, { status: 400 });
     }
-    if (!validatePhone(phone_number)) {
-      return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
-    }
 
-    const cleanedPhone = formatPhoneNumber(phone_number);
     const supabase = createServerSupabase();
+    let cleanedPhone: string;
 
-    // Same duplicate check as public registration: match both the
-    // modern E.164 form and the legacy digits-only form.
-    const legacyDigits = cleanedPhone.replace(/^\+/, '');
-    const { data: existing } = await supabase
-      .from('attendees')
-      .select('id, registration_number')
-      .or(`phone_number.eq.${cleanedPhone},phone_number.eq.${legacyDigits}`)
-      .maybeSingle();
+    const hasPhone = typeof phone_number === 'string' && phone_number.trim().length > 0;
 
-    if (existing) {
-      return NextResponse.json(
-        { success: false, error: 'رقم الهاتف مسجل مسبقاً لدى مشارك آخر.' },
-        { status: 409 }
-      );
+    if (hasPhone) {
+      if (!validatePhone(phone_number)) {
+        return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
+      }
+      cleanedPhone = formatPhoneNumber(phone_number);
+
+      // Duplicate check only applies to real numbers — placeholders
+      // are always unique by construction.
+      const legacyDigits = cleanedPhone.replace(/^\+/, '');
+      const { data: existing } = await supabase
+        .from('attendees')
+        .select('id, registration_number')
+        .or(`phone_number.eq.${cleanedPhone},phone_number.eq.${legacyDigits}`)
+        .maybeSingle();
+
+      if (existing) {
+        return NextResponse.json(
+          { success: false, error: 'رقم الهاتف مسجل مسبقاً لدى مشارك آخر.' },
+          { status: 409 }
+        );
+      }
+    } else {
+      cleanedPhone = generatePlaceholderPhone();
     }
 
     const registrationNumber = generateRegistrationNumber();

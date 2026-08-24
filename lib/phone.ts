@@ -177,6 +177,8 @@ export function splitPhoneForEditing(
 
 /** Human-friendly international display, e.g. "+222 22 21 23 456". */
 export function formatForDisplay(storedPhone: string): string {
+  if (isPlaceholderPhone(storedPhone)) return '';
+
   const value = storedPhone.trim().startsWith('+') ? storedPhone.trim() : `+${storedPhone.trim()}`;
   try {
     const parsed = parsePhoneNumberFromString(value);
@@ -185,4 +187,19 @@ export function formatForDisplay(storedPhone: string): string {
     // ignore
   }
   return storedPhone;
+}
+
+/**
+ * For attendees whose phone number is unknown (e.g. bulk-imported
+ * guests), we still need a unique, non-null value to satisfy the
+ * database and the duplicate-check logic — this is never shown to
+ * anyone and never treated as a real, contactable phone number.
+ */
+export function generatePlaceholderPhone(): string {
+  const random = Math.random().toString(36).slice(2, 10).toUpperCase();
+  return `NOPHONE-${random}-${Date.now().toString(36).toUpperCase()}`;
+}
+
+export function isPlaceholderPhone(phone: string | null | undefined): boolean {
+  return !!phone && phone.startsWith('NOPHONE-');
 }

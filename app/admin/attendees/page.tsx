@@ -8,6 +8,7 @@ import {
   toE164,
   splitPhoneForEditing,
   formatForDisplay,
+  isPlaceholderPhone,
   DEFAULT_COUNTRY,
   type CountryCode,
 } from '@/lib/phone';
@@ -296,15 +297,19 @@ export default function AttendeesPage() {
                           <td className="text-xs font-mono" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>{a.registration_number}</td>
                           <td className="font-medium">{a.full_name}</td>
                           <td dir="ltr" className="text-right">
-                            <a
-                              href={`https://wa.me/${a.phone_number.replace(/\D/g, '')}`}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style={{ color: '#1a5c2a', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-                              title="فتح واتساب"
-                            >
-                              {formatForDisplay(a.phone_number)}
-                            </a>
+                            {isPlaceholderPhone(a.phone_number) ? (
+                              <span style={{ color: '#999' }}>بدون رقم</span>
+                            ) : (
+                              <a
+                                href={`https://wa.me/${a.phone_number.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ color: '#1a5c2a', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                                title="فتح واتساب"
+                              >
+                                {formatForDisplay(a.phone_number)}
+                              </a>
+                            )}
                           </td>
                           <td>{a.city || '—'}</td>
                           <td className="text-xs">{a.occupation || '—'}</td>

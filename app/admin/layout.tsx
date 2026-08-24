@@ -27,6 +27,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin/dashboard', label: 'الإحصائيات', icon: '📊' },
     { href: '/admin/attendees', label: 'المشاركون', icon: '👥' },
+    { href: '/admin/create-invitation', label: 'دعوة يدوية', icon: '➕' },
     { href: '/admin/settings', label: 'إعدادات المؤتمر', icon: '⚙️' },
     { href: '/attendance', label: 'مسح QR', icon: '📷' },
   ];
@@ -60,15 +61,15 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 shadow-lg"
         style={{ background: '#fff', borderTop: '1px solid var(--color-border)' }}>
-        <div className="flex">
+        <div className="flex overflow-x-auto">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link key={item.href} href={item.href}
                 className="flex-1 flex flex-col items-center py-3 gap-1 text-xs font-medium transition-colors"
-                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent' }}>
+                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '64px' }}>
                 <span className="text-xl">{item.icon}</span>
-                <span>{item.label}</span>
+                <span className="whitespace-nowrap">{item.label}</span>
               </Link>
             );
           })}

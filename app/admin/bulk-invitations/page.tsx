@@ -161,8 +161,8 @@ export default function BulkInvitationsPage() {
           رفع دعوات جماعياً
         </h1>
         <p className="text-sm mt-1" style={{ color: '#444444' }}>
-          ارفع ملف CSV أو الصق البيانات مباشرة. كل سطر: الاسم، رقم الهاتف (إلزامي)، المدينة (اختياري)، الصفة (اختياري).
-          كل شخص سيحصل على بطاقة دعوة وQR فريد ومقبولة مباشرة.
+          ارفع ملف CSV أو الصق البيانات مباشرة. كل سطر: الاسم (إلزامي)، رقم الهاتف (اختياري)، المدينة (اختياري)، الصفة (اختياري).
+          كل شخص سيحصل على بطاقة دعوة وQR فريد ومقبولة مباشرة — حتى بدون رقم هاتف.
         </p>
       </div>
 
@@ -196,7 +196,7 @@ export default function BulkInvitationsPage() {
               value={rawText}
               onChange={(e) => handleTextChange(e.target.value)}
               rows={8}
-              placeholder={'محمد أحمد,+22222123456,نواكشوط,طالب\nفاطمة علي,+22233112233,نواذيبو,\nأحمد سالم,+221771234567,,دكتور'}
+              placeholder={'محمد أحمد\nفاطمة علي,+22233112233,نواذيبو,\nأحمد سالم,,نواكشوط,دكتور'}
               className="input-islamic w-full px-4 py-3 rounded-xl text-sm font-mono"
               dir="ltr"
               disabled={submitting}
@@ -209,14 +209,11 @@ export default function BulkInvitationsPage() {
                 معاينة: {rows.length} شخص
               </p>
               <div className="max-h-48 overflow-y-auto text-xs space-y-1">
-                {rows.slice(0, 20).map((r, i) => {
-                  const missingPhone = !r.phone_number?.trim();
-                  return (
-                    <p key={i} style={{ color: missingPhone ? '#dc2626' : '#555' }}>
-                      {i + 1}. {r.full_name || '—'} {missingPhone ? '— ⚠️ بدون رقم هاتف (سيُرفض)' : `— ${r.phone_number}`}
-                    </p>
-                  );
-                })}
+                {rows.slice(0, 20).map((r, i) => (
+                  <p key={i} style={{ color: '#555' }}>
+                    {i + 1}. {r.full_name || '—'} {r.phone_number ? `— ${r.phone_number}` : '— (بدون رقم)'}
+                  </p>
+                ))}
                 {rows.length > 20 && <p style={{ color: '#999' }}>و{rows.length - 20} آخرين...</p>}
               </div>
             </div>

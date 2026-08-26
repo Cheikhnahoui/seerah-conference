@@ -58,6 +58,13 @@ export async function PUT(
       return NextResponse.json({ success: false, error: 'حالة موافقة غير صالحة' }, { status: 400 });
     }
 
+    if (
+      body.delivery_status &&
+      !['not_delivered', 'delivered'].includes(body.delivery_status)
+    ) {
+      return NextResponse.json({ success: false, error: 'حالة تسليم غير صالحة' }, { status: 400 });
+    }
+
     const supabase = createServerSupabase();
 
     const updateData: Record<string, unknown> = {
@@ -69,6 +76,7 @@ export async function PUT(
     if (body.city !== undefined) updateData.city = body.city;
     if (body.occupation !== undefined) updateData.occupation = body.occupation;
     if (body.approval_status !== undefined) updateData.approval_status = body.approval_status;
+    if (body.delivery_status !== undefined) updateData.delivery_status = body.delivery_status;
 
     const { data, error } = await supabase
       .from('attendees')

@@ -75,6 +75,8 @@ export async function POST(request: NextRequest) {
         qr_code: null,
         attendance_status: 'registered',
         approval_status: 'approved',
+        is_manual: true,
+        delivery_status: 'not_delivered',
         registration_date: new Date().toISOString(),
       })
       .select()

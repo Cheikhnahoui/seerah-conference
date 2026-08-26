@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken } from '@/lib/utils';
+import { generatePlaceholderPhone } from '@/lib/phone';
 
 interface BulkRow {
   full_name: string;
@@ -18,16 +19,20 @@ interface RowResult {
 
 /**
  * Bulk version of admin-create: takes an array of rows (parsed from a
- * CSV on the client) and creates each one as an already-approved
- * attendee with its own unique registration number / QR code.
+ * CSV on the client) and creates each one as an already-approved,
+ * manually-created attendee with its own unique registration number /
+ * QR code.
  *
- * Unlike the single manual-creation flow, the phone number is
- * REQUIRED for every row here — bulk imports are expected to come
- * from a real contact list, so a missing/invalid number is treated
- * as a row error rather than silently creating a placeholder.
+ * The phone number is OPTIONAL for every row — this flow is meant for
+ * guest lists where only the name is known. Rows without a phone get
+ * a unique internal placeholder, exactly like the single manual-
+ * creation flow, so they still get a real unique QR code and appear
+ * everywhere the other attendees do. They just can't self-retrieve
+ * their invitation later — the admin hands it to them directly (see
+ * the manual-invitations gallery for delivery tracking).
  *
  * Each row is processed independently — one bad row (invalid name,
- * duplicate/missing phone, etc.) does not block the rest of the batch.
+ * duplicate phone, etc.) does not block the rest of the batch.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -59,27 +64,28 @@ export async function POST(request: NextRequest) {
       }
 
       const hasPhone = typeof row.phone_number === 'string' && row.phone_number.trim().length > 0;
-      if (!hasPhone) {
-        results.push({ full_name: fullName, success: false, error: 'رقم الهاتف مطلوب' });
-        continue;
-      }
-      if (!validatePhone(row.phone_number!)) {
-        results.push({ full_name: fullName, success: false, error: 'رقم هاتف غير صالح' });
-        continue;
-      }
+      let cleanedPhone: string;
 
-      const cleanedPhone = formatPhoneNumber(row.phone_number!);
+      if (hasPhone) {
+        if (!validatePhone(row.phone_number!)) {
+          results.push({ full_name: fullName, success: false, error: 'رقم هاتف غير صالح' });
+          continue;
+        }
+        cleanedPhone = formatPhoneNumber(row.phone_number!);
 
-      const legacyDigits = cleanedPhone.replace(/^\+/, '');
-      const { data: existing } = await supabase
-        .from('attendees')
-        .select('id')
-        .or(`phone_number.eq.${cleanedPhone},phone_number.eq.${legacyDigits}`)
-        .maybeSingle();
+        const legacyDigits = cleanedPhone.replace(/^\+/, '');
+        const { data: existing } = await supabase
+          .from('attendees')
+          .select('id')
+          .or(`phone_number.eq.${cleanedPhone},phone_number.eq.${legacyDigits}`)
+          .maybeSingle();
 
-      if (existing) {
-        results.push({ full_name: fullName, success: false, error: 'رقم الهاتف مسجل مسبقاً' });
-        continue;
+        if (existing) {
+          results.push({ full_name: fullName, success: false, error: 'رقم الهاتف مسجل مسبقاً' });
+          continue;
+        }
+      } else {
+        cleanedPhone = generatePlaceholderPhone();
       }
 
       const registrationNumber = generateRegistrationNumber();
@@ -95,6 +101,8 @@ export async function POST(request: NextRequest) {
           qr_code: null,
           attendance_status: 'registered',
           approval_status: 'approved',
+          is_manual: true,
+          delivery_status: 'not_delivered',
           registration_date: new Date().toISOString(),
         })
         .select('registration_number')

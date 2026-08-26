@@ -27,10 +27,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   const navItems = [
     { href: '/admin/dashboard', label: 'الإحصائيات', icon: '📊' },
     { href: '/admin/attendees', label: 'المشاركون', icon: '👥' },
-    { href: '/admin/create-invitation', label: 'دعوة يدوية', icon: '➕' },
+    { href: '/admin/create-invitation', label: 'إنشاء دعوة', icon: '➕' },
     { href: '/admin/bulk-invitations', label: 'رفع جماعي', icon: '📤' },
-    { href: '/admin/manual-invitations', label: 'الدعوات اليدوية', icon: '🎫' },
-    { href: '/admin/settings', label: 'إعدادات المؤتمر', icon: '⚙️' },
+    { href: '/admin/manual-invitations', label: 'سجل الدعوات', icon: '🎫' },
+    { href: '/admin/settings', label: 'الإعدادات', icon: '⚙️' },
     { href: '/attendance', label: 'مسح QR', icon: '📷' },
   ];
 

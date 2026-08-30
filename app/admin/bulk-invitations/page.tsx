@@ -17,10 +17,11 @@ interface RowResult {
   error?: string;
 }
 
+const BATCH_SIZE = 100; // rows per request — keeps each API call well under Vercel's timeout
+
 /**
  * Minimal CSV line splitter — handles quoted fields containing commas.
- * No external dependency needed for the simple "name,phone,city,job"
- * format this page expects.
+ * A line with no commas at all is just treated as a bare name.
  */
 function parseCsvLine(line: string): string[] {
   const cells: string[] = [];
@@ -42,7 +43,7 @@ function parseCsvLine(line: string): string[] {
   return cells;
 }
 
-function parseCsv(text: string): ParsedRow[] {
+function parseNames(text: string): ParsedRow[] {
   const lines = text
     .split(/\r?\n/)
     .map((l) => l.trim())
@@ -50,12 +51,10 @@ function parseCsv(text: string): ParsedRow[] {
 
   if (lines.length === 0) return [];
 
-  // Detect and skip a header row (e.g. "الاسم,الهاتف,..." or "name,phone,...").
+  // Skip an obvious header row if present.
   const firstCells = parseCsvLine(lines[0]).map((c) => c.toLowerCase());
   const looksLikeHeader =
-    firstCells.some((c) => ['name', 'full_name', 'الاسم', 'اسم'].includes(c)) ||
-    firstCells.some((c) => ['phone', 'phone_number', 'الهاتف', 'هاتف'].includes(c));
-
+    firstCells.some((c) => ['name', 'full_name', 'الاسم', 'اسم'].includes(c));
   const dataLines = looksLikeHeader ? lines.slice(1) : lines;
 
   return dataLines.map((line) => {
@@ -77,6 +76,7 @@ export default function BulkInvitationsPage() {
   const [rawText, setRawText] = useState('');
   const [rows, setRows] = useState<ParsedRow[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [progress, setProgress] = useState({ done: 0, total: 0 });
   const [results, setResults] = useState<RowResult[] | null>(null);
   const [serverError, setServerError] = useState('');
 
@@ -92,7 +92,7 @@ export default function BulkInvitationsPage() {
 
   const handleTextChange = (text: string) => {
     setRawText(text);
-    setRows(parseCsv(text));
+    setRows(parseNames(text));
     setResults(null);
   };
 
@@ -112,27 +112,48 @@ export default function BulkInvitationsPage() {
     setSubmitting(true);
     setServerError('');
     setResults(null);
-    try {
-      const response = await fetch('/api/attendees/bulk-create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
-        body: JSON.stringify({ rows }),
-      });
-      const data = await response.json();
-      if (response.status === 401) {
-        router.replace('/admin');
-        return;
-      }
-      if (data.success) {
-        setResults(data.results);
-      } else {
-        setServerError(data.error || 'حدث خطأ، حاول مرة أخرى');
-      }
-    } catch {
-      setServerError('حدث خطأ في الاتصال، حاول مرة أخرى');
-    } finally {
-      setSubmitting(false);
+
+    const allResults: RowResult[] = [];
+    const batches: ParsedRow[][] = [];
+    for (let i = 0; i < rows.length; i += BATCH_SIZE) {
+      batches.push(rows.slice(i, i + BATCH_SIZE));
     }
+
+    setProgress({ done: 0, total: rows.length });
+
+    for (const batch of batches) {
+      try {
+        const response = await fetch('/api/attendees/bulk-create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+          body: JSON.stringify({ rows: batch }),
+        });
+
+        if (response.status === 401) {
+          router.replace('/admin');
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success) {
+          allResults.push(...data.results);
+        } else {
+          // Mark this whole batch as failed but keep going with the rest.
+          batch.forEach((r) =>
+            allResults.push({ full_name: r.full_name, success: false, error: data.error || 'فشلت الدفعة' })
+          );
+        }
+      } catch {
+        batch.forEach((r) =>
+          allResults.push({ full_name: r.full_name, success: false, error: 'خطأ في الاتصال' })
+        );
+      }
+
+      setProgress((prev) => ({ ...prev, done: Math.min(prev.done + batch.length, rows.length) }));
+    }
+
+    setResults(allResults);
+    setSubmitting(false);
   };
 
   const reset = () => {
@@ -140,6 +161,7 @@ export default function BulkInvitationsPage() {
     setRows([]);
     setResults(null);
     setServerError('');
+    setProgress({ done: 0, total: 0 });
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
@@ -153,6 +175,7 @@ export default function BulkInvitationsPage() {
 
   const successCount = results?.filter((r) => r.success).length ?? 0;
   const failCount = results ? results.length - successCount : 0;
+  const progressPercent = progress.total > 0 ? Math.round((progress.done / progress.total) * 100) : 0;
 
   return (
     <div className="p-4 md:p-8 max-w-3xl">
@@ -161,8 +184,7 @@ export default function BulkInvitationsPage() {
           رفع دعوات جماعياً
         </h1>
         <p className="text-sm mt-1" style={{ color: '#444444' }}>
-          ارفع ملف CSV أو الصق البيانات مباشرة. كل سطر: الاسم (إلزامي)، رقم الهاتف (اختياري)، المدينة (اختياري)، الصفة (اختياري).
-          كل شخص سيحصل على بطاقة دعوة وQR فريد ومقبولة مباشرة — حتى بدون رقم هاتف.
+          الصق قائمة الأسماء — اسم واحد في كل سطر — أو ارفع ملف نصي/CSV. كل شخص سيحصل على بطاقة دعوة وQR فريد ومقبولة مباشرة، بدون حاجة لرقم هاتف.
         </p>
       </div>
 
@@ -174,7 +196,7 @@ export default function BulkInvitationsPage() {
 
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-              ارفع ملف CSV
+              ارفع ملف (CSV أو نصي)
             </label>
             <input
               ref={fileInputRef}
@@ -190,32 +212,44 @@ export default function BulkInvitationsPage() {
 
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-              الصق البيانات مباشرة
+              الصق الأسماء مباشرة (اسم في كل سطر)
             </label>
             <textarea
               value={rawText}
               onChange={(e) => handleTextChange(e.target.value)}
-              rows={8}
-              placeholder={'محمد أحمد\nفاطمة علي,+22233112233,نواذيبو,\nأحمد سالم,,نواكشوط,دكتور'}
-              className="input-islamic w-full px-4 py-3 rounded-xl text-sm font-mono"
-              dir="ltr"
+              rows={10}
+              placeholder={'محمد أحمد\nفاطمة علي\nأحمد سالم\n...'}
+              className="input-islamic w-full px-4 py-3 rounded-xl text-sm"
               disabled={submitting}
             />
           </div>
 
-          {rows.length > 0 && (
+          {rows.length > 0 && !submitting && (
             <div className="rounded-xl p-3" style={{ background: 'rgba(45,110,45,0.06)', border: '1px dashed var(--color-green)' }}>
               <p className="text-sm font-semibold mb-2" style={{ color: 'var(--color-green-dark)' }}>
-                معاينة: {rows.length} شخص
+                معاينة: {rows.length} شخص {rows.length > BATCH_SIZE && `(سيُرسَل على ${Math.ceil(rows.length / BATCH_SIZE)} دفعة تلقائياً)`}
               </p>
               <div className="max-h-48 overflow-y-auto text-xs space-y-1">
                 {rows.slice(0, 20).map((r, i) => (
-                  <p key={i} style={{ color: '#555' }}>
-                    {i + 1}. {r.full_name || '—'} {r.phone_number ? `— ${r.phone_number}` : '— (بدون رقم)'}
-                  </p>
+                  <p key={i} style={{ color: '#555' }}>{i + 1}. {r.full_name || '—'}</p>
                 ))}
                 {rows.length > 20 && <p style={{ color: '#999' }}>و{rows.length - 20} آخرين...</p>}
               </div>
+            </div>
+          )}
+
+          {submitting && (
+            <div className="rounded-xl p-4" style={{ background: 'rgba(201,168,76,0.08)', border: '1px dashed var(--color-gold)' }}>
+              <p className="text-sm font-semibold mb-2 text-center" style={{ color: 'var(--color-gold)' }}>
+                جاري الإنشاء: {progress.done} / {progress.total}
+              </p>
+              <div className="w-full h-2 rounded-full overflow-hidden" style={{ background: 'rgba(0,0,0,0.08)' }}>
+                <div
+                  className="h-full transition-all duration-300"
+                  style={{ width: `${progressPercent}%`, background: 'var(--color-gold)' }}
+                />
+              </div>
+              <p className="text-xs text-center mt-2" style={{ color: '#888' }}>لا تُغلق الصفحة أثناء الرفع...</p>
             </div>
           )}
 
@@ -234,10 +268,9 @@ export default function BulkInvitationsPage() {
                 <span>إنشاء {rows.length > 0 ? `(${rows.length})` : ''} دعوة</span>
               )}
             </button>
-            {rows.length > 0 && (
+            {rows.length > 0 && !submitting && (
               <button
                 onClick={reset}
-                disabled={submitting}
                 className="px-6 py-4 rounded-xl text-sm font-medium"
                 style={{ background: 'rgba(0,0,0,0.05)', color: '#555' }}
               >
@@ -276,12 +309,21 @@ export default function BulkInvitationsPage() {
             ))}
           </div>
 
-          <button
-            onClick={reset}
-            className="btn-gold w-full py-3 rounded-xl text-sm font-bold"
-          >
-            رفع دفعة أخرى
-          </button>
+          <div className="flex gap-3">
+            <a
+              href="/admin/manual-invitations"
+              className="flex-1 py-3 rounded-xl text-sm font-bold text-center"
+              style={{ background: 'rgba(26,92,42,0.1)', color: 'var(--color-green)' }}
+            >
+              الذهاب لسجل الدعوات
+            </a>
+            <button
+              onClick={reset}
+              className="btn-gold flex-1 py-3 rounded-xl text-sm font-bold"
+            >
+              رفع دفعة أخرى
+            </button>
+          </div>
         </div>
       )}
     </div>

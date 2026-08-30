@@ -96,9 +96,56 @@ export default function BulkInvitationsPage() {
     setResults(null);
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    const isExcel = /\.(xlsx|xls)$/i.test(file.name);
+
+    if (isExcel) {
+      setServerError('');
+      try {
+        const XLSX = await import('xlsx');
+        const buffer = await file.arrayBuffer();
+        const workbook = XLSX.read(buffer, { type: 'array' });
+        const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows: unknown[][] = XLSX.utils.sheet_to_json(firstSheet, { header: 1 });
+
+        if (rows.length === 0) {
+          setServerError('الملف فارغ');
+          return;
+        }
+
+        // Find the column whose header looks like a "name" column,
+        // wherever it is (your sheet might have it 4th, not 1st).
+        const headerRow = rows[0].map((c) => String(c ?? '').trim().toLowerCase());
+        const nameColIndex = headerRow.findIndex((c) =>
+          ['name', 'full_name', 'الاسم', 'اسم'].includes(c)
+        );
+
+        const colIndex = nameColIndex !== -1 ? nameColIndex : 0;
+        const dataRows = nameColIndex !== -1 ? rows.slice(1) : rows;
+
+        const names = dataRows
+          .map((r) => String(r[colIndex] ?? '').trim())
+          .filter((n) => n.length > 0);
+
+        if (names.length === 0) {
+          setServerError('لم أجد أي أسماء في الملف. تأكد أن عمود الاسم يحمل رأساً واضحاً مثل "الاسم".');
+          return;
+        }
+
+        setRawText(names.join('\n'));
+        setRows(names.map((full_name) => ({ full_name })));
+        setResults(null);
+      } catch (err) {
+        console.error('Excel parse error:', err);
+        setServerError('تعذّرت قراءة ملف Excel. تأكد أنه بصيغة .xlsx صالحة.');
+      }
+      return;
+    }
+
+    // Plain text / CSV path (unchanged).
     const reader = new FileReader();
     reader.onload = () => {
       const text = String(reader.result || '');
@@ -196,12 +243,12 @@ export default function BulkInvitationsPage() {
 
           <div>
             <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-              ارفع ملف (CSV أو نصي)
+              ارفع ملف (Excel أو CSV أو نصي)
             </label>
             <input
               ref={fileInputRef}
               type="file"
-              accept=".csv,text/csv,text/plain"
+              accept=".csv,.xlsx,.xls,text/csv,text/plain,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
               onChange={handleFileUpload}
               className="input-islamic w-full px-4 py-3 rounded-xl text-sm"
               disabled={submitting}

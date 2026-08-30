@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
-import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken } from '@/lib/utils';
+import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken, generateQrToken } from '@/lib/utils';
 import { generatePlaceholderPhone } from '@/lib/phone';
 
 interface BulkRow {
@@ -20,8 +20,8 @@ interface RowResult {
 /**
  * Bulk version of admin-create: takes an array of rows (parsed from a
  * CSV on the client) and creates each one as an already-approved,
- * manually-created attendee with its own unique registration number /
- * QR code.
+ * manually-created attendee with its own unique registration number,
+ * secure qr_token, and QR code.
  *
  * The phone number is OPTIONAL for every row — this flow is meant for
  * guest lists where only the name is known. Rows without a phone get
@@ -89,11 +89,13 @@ export async function POST(request: NextRequest) {
       }
 
       const registrationNumber = generateRegistrationNumber();
+      const qrToken = generateQrToken();
 
       const { data: attendee, error } = await supabase
         .from('attendees')
         .insert({
           registration_number: registrationNumber,
+          qr_token: qrToken,
           full_name: fullName,
           phone_number: cleanedPhone,
           city: row.city?.trim() || null,

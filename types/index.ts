@@ -6,7 +6,11 @@ export interface Attendee {
   city: string | null;
   occupation: string | null;
   qr_code: string;
+  qr_token: string | null;
   attendance_status: 'registered' | 'attended';
+  approval_status: 'pending' | 'approved' | 'rejected';
+  is_manual: boolean;
+  delivery_status: 'not_delivered' | 'delivered';
   registration_date: string;
   attendance_date: string | null;
   created_at: string;

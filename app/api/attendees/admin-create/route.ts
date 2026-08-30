@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
-import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken } from '@/lib/utils';
+import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken, generateQrToken } from '@/lib/utils';
 import { generatePlaceholderPhone } from '@/lib/phone';
 
 /**
@@ -16,6 +16,10 @@ import { generatePlaceholderPhone } from '@/lib/phone';
  * attendee list like everyone else. They simply won't be able to
  * self-retrieve their invitation later (there's no real number for
  * them to search with) — the admin hands it to them directly.
+ *
+ * Every manually-created invitation also gets a secure, random
+ * qr_token — this (not the human-readable registration_number) is
+ * what actually gets encoded into the QR Code on the card.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -43,8 +47,6 @@ export async function POST(request: NextRequest) {
       }
       cleanedPhone = formatPhoneNumber(phone_number);
 
-      // Duplicate check only applies to real numbers — placeholders
-      // are always unique by construction.
       const legacyDigits = cleanedPhone.replace(/^\+/, '');
       const { data: existing } = await supabase
         .from('attendees')
@@ -63,11 +65,13 @@ export async function POST(request: NextRequest) {
     }
 
     const registrationNumber = generateRegistrationNumber();
+    const qrToken = generateQrToken();
 
     const { data: attendee, error } = await supabase
       .from('attendees')
       .insert({
         registration_number: registrationNumber,
+        qr_token: qrToken,
         full_name: full_name.trim(),
         phone_number: cleanedPhone,
         city: city?.trim() || null,

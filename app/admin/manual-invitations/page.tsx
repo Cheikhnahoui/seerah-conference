@@ -6,6 +6,28 @@ import { Attendee } from '@/types';
 import { InvitationCard } from '@/components/InvitationCard';
 import { isPlaceholderPhone, formatForDisplay } from '@/lib/phone';
 
+function qrPayloadFor(a: Attendee): string {
+  return a.qr_token
+    ? JSON.stringify({ token: a.qr_token, app: 'seerah-conf' })
+    : JSON.stringify({ reg: a.registration_number, app: 'seerah-conf' });
+}
+
+async function generateQrPngBlob(a: Attendee): Promise<Blob> {
+  const QRCode = await import('qrcode');
+  const dataUrl = await QRCode.toDataURL(qrPayloadFor(a), {
+    width: 600,
+    margin: 2,
+    color: { dark: '#1a4a1a', light: '#ffffff' },
+    errorCorrectionLevel: 'H',
+  });
+  const res = await fetch(dataUrl);
+  return res.blob();
+}
+
+function safeFileName(name: string): string {
+  return name.trim().replace(/\s+/g, '_').replace(/[^\p{L}\p{N}_-]/gu, '') || 'guest';
+}
+
 export default function ManualInvitationsPage() {
   const router = useRouter();
   const [checkingAuth, setCheckingAuth] = useState(true);
@@ -16,6 +38,9 @@ export default function ManualInvitationsPage() {
   const [total, setTotal] = useState(0);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkDownloading, setBulkDownloading] = useState(false);
 
   const getToken = () => localStorage.getItem('admin_token') || '';
 
@@ -53,7 +78,7 @@ export default function ManualInvitationsPage() {
   }, [checkingAuth, fetchAttendees]);
 
   const toggleDelivery = async (a: Attendee) => {
-    const currentStatus = (a as any).delivery_status || 'not_delivered';
+    const currentStatus = a.delivery_status || 'not_delivered';
     const nextStatus = currentStatus === 'delivered' ? 'not_delivered' : 'delivered';
 
     setUpdatingId(a.id);
@@ -65,7 +90,7 @@ export default function ManualInvitationsPage() {
       });
       if ((await response.json()).success) {
         setAttendees((prev) =>
-          prev.map((x) => (x.id === a.id ? ({ ...x, delivery_status: nextStatus } as any) : x))
+          prev.map((x) => (x.id === a.id ? { ...x, delivery_status: nextStatus } : x))
         );
       }
     } finally {
@@ -73,7 +98,67 @@ export default function ManualInvitationsPage() {
     }
   };
 
-  const deliveredCount = attendees.filter((a) => (a as any).delivery_status === 'delivered').length;
+  const downloadSingleQr = async (a: Attendee) => {
+    setDownloadingId(a.id);
+    try {
+      const blob = await generateQrPngBlob(a);
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${safeFileName(a.full_name)}_QR.png`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev);
+      next.has(id) ? next.delete(id) : next.add(id);
+      return next;
+    });
+  };
+
+  const toggleSelectAll = () => {
+    if (selectedIds.size === attendees.length) {
+      setSelectedIds(new Set());
+    } else {
+      setSelectedIds(new Set(attendees.map((a) => a.id)));
+    }
+  };
+
+  const downloadSelectedZip = async () => {
+    if (selectedIds.size === 0) return;
+    setBulkDownloading(true);
+    try {
+      const JSZip = (await import('jszip')).default;
+      const zip = new JSZip();
+
+      const selected = attendees.filter((a) => selectedIds.has(a.id));
+      for (const a of selected) {
+        const blob = await generateQrPngBlob(a);
+        zip.file(`${safeFileName(a.full_name)}_QR.png`, blob);
+      }
+
+      const zipBlob = await zip.generateAsync({ type: 'blob' });
+      const url = URL.createObjectURL(zipBlob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `دعوات-يدوية-QR-${new Date().toISOString().slice(0, 10)}.zip`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Bulk QR export error:', e);
+    } finally {
+      setBulkDownloading(false);
+    }
+  };
+
+  const deliveredCount = attendees.filter((a) => a.delivery_status === 'delivered').length;
+  const attendedCount = attendees.filter((a) => a.attendance_status === 'attended').length;
+  const allSelected = attendees.length > 0 && selectedIds.size === attendees.length;
 
   if (checkingAuth) {
     return (
@@ -92,12 +177,14 @@ export default function ManualInvitationsPage() {
         <p className="text-sm mt-1" style={{ color: '#444444' }}>
           كل الدعوات التي أنشأتها بنفسك (فردياً أو عبر رفع جماعي) — بمعزل عن التسجيل العام للموقع.
         </p>
-        <p className="text-sm mt-2 font-medium" style={{ color: 'var(--color-green)' }}>
-          الإجمالي: {total} — تم تسليم {deliveredCount} منها
-        </p>
+        <div className="flex flex-wrap gap-4 mt-3 text-sm font-medium">
+          <span style={{ color: 'var(--color-green)' }}>الإجمالي: {total}</span>
+          <span style={{ color: '#1a5c2a' }}>تم التسليم: {deliveredCount}</span>
+          <span style={{ color: 'var(--color-gold)' }}>حضر فعلياً: {attendedCount}</span>
+        </div>
       </div>
 
-      <div className="glass rounded-2xl p-4 mb-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
+      <div className="glass rounded-2xl p-4 mb-4 space-y-3" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
         <input
           type="text"
           placeholder="ابحث بالاسم أو رقم التسجيل..."
@@ -105,6 +192,33 @@ export default function ManualInvitationsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="input-islamic w-full px-4 py-2.5 rounded-xl text-sm"
         />
+
+        {attendees.length > 0 && (
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <label className="flex items-center gap-2 text-sm" style={{ color: '#555' }}>
+              <input
+                type="checkbox"
+                checked={allSelected}
+                onChange={toggleSelectAll}
+                style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+              />
+              <span>تحديد الكل ({selectedIds.size})</span>
+            </label>
+
+            <button
+              onClick={downloadSelectedZip}
+              disabled={selectedIds.size === 0 || bulkDownloading}
+              className="btn-gold px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+              style={{ opacity: selectedIds.size === 0 ? 0.5 : 1 }}
+            >
+              {bulkDownloading ? (
+                <><span className="spinner w-4 h-4" style={{ borderWidth: '2px' }} /><span>جاري التجهيز...</span></>
+              ) : (
+                <span>📦 تنزيل QR المحدّدين (ZIP)</span>
+              )}
+            </button>
+          </div>
+        )}
       </div>
 
       {loading ? (
@@ -117,22 +231,46 @@ export default function ManualInvitationsPage() {
       ) : (
         <div className="space-y-3">
           {attendees.map((a) => {
-            const delivered = (a as any).delivery_status === 'delivered';
+            const delivered = a.delivery_status === 'delivered';
+            const attended = a.attendance_status === 'attended';
             const noPhone = isPlaceholderPhone(a.phone_number);
             const expanded = expandedId === a.id;
 
             return (
               <div key={a.id} className="rounded-2xl overflow-hidden" style={{ border: '1px solid var(--color-border)', background: '#fff' }}>
-                <div className="p-4 flex items-center justify-between gap-3 flex-wrap">
-                  <div>
-                    <p className="font-semibold" style={{ color: '#1a1a1a' }}>{a.full_name}</p>
-                    <p className="text-xs font-mono mt-0.5" style={{ color: 'rgba(201,168,76,0.8)' }}>{a.registration_number}</p>
-                    <p className="text-xs mt-0.5" style={{ color: '#888' }}>
-                      {noPhone ? 'بدون رقم هاتف' : formatForDisplay(a.phone_number)}
-                    </p>
+                <div className="p-4 flex items-start justify-between gap-3 flex-wrap">
+                  <div className="flex items-start gap-3">
+                    <input
+                      type="checkbox"
+                      checked={selectedIds.has(a.id)}
+                      onChange={() => toggleSelect(a.id)}
+                      className="mt-1.5"
+                      style={{ width: '16px', height: '16px', cursor: 'pointer' }}
+                    />
+                    <div>
+                      <p className="font-semibold" style={{ color: '#1a1a1a' }}>{a.full_name}</p>
+                      <p className="text-xs font-mono mt-0.5" style={{ color: 'rgba(201,168,76,0.8)' }}>{a.registration_number}</p>
+                      <p className="text-xs mt-0.5" style={{ color: '#888' }}>
+                        {noPhone ? 'بدون رقم هاتف' : formatForDisplay(a.phone_number)}
+                      </p>
+                      {attended && (
+                        <p className="text-xs mt-0.5 font-medium" style={{ color: 'var(--color-gold-dark)' }}>
+                          ✓ حضر فعلياً
+                        </p>
+                      )}
+                    </div>
                   </div>
 
-                  <div className="flex items-center gap-2">
+                  <div className="flex items-center gap-2 flex-wrap justify-end">
+                    <button
+                      onClick={() => downloadSingleQr(a)}
+                      disabled={downloadingId === a.id}
+                      className="px-3 py-1.5 rounded-lg text-xs font-medium"
+                      style={{ background: 'rgba(45,110,45,0.08)', color: 'var(--color-green-dark)', border: '1px solid rgba(45,110,45,0.25)' }}
+                    >
+                      {downloadingId === a.id ? '...' : '⬇️ QR'}
+                    </button>
+
                     <button
                       onClick={() => toggleDelivery(a)}
                       disabled={updatingId === a.id}

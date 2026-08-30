@@ -88,10 +88,13 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
     if (!qrCanvasRef.current || !attendee.registration_number) return;
 
     import('qrcode').then(QRCode => {
-      const qrData = JSON.stringify({
-        reg: attendee.registration_number,
-        app: 'seerah-conf',
-      });
+      // Prefer the secure random qr_token when present (manually
+      // created invitations). Falls back to the registration_number
+      // for public registrations that don't have a token, so nothing
+      // breaks for existing/other attendees.
+      const qrData = attendee.qr_token
+        ? JSON.stringify({ token: attendee.qr_token, app: 'seerah-conf' })
+        : JSON.stringify({ reg: attendee.registration_number, app: 'seerah-conf' });
 
       QRCode.toCanvas(qrCanvasRef.current, qrData, {
         width: 160,
@@ -103,7 +106,7 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
         errorCorrectionLevel: 'H',
       });
     });
-  }, [attendee.registration_number]);
+  }, [attendee.registration_number, attendee.qr_token]);
 
   /*
    * Capture the EXACT card displayed in the browser.

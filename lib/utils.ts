@@ -68,6 +68,17 @@ export function validateName(name: string): boolean {
   return name.trim().length >= 3 && name.trim().length <= 100;
 }
 
+/**
+ * Generates a cryptographically random, unguessable token to be used
+ * as the QR Code payload for manually-created invitations. Unlike
+ * the human-readable registration_number, this carries no meaning
+ * and no personal information — it's a pure opaque identifier the
+ * backend resolves server-side.
+ */
+export function generateQrToken(): string {
+  return crypto.randomBytes(24).toString('base64url');
+}
+
 export function formatDate(dateString: string): string {
   try {
     const date = new Date(dateString);

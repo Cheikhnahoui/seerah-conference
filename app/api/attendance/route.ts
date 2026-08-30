@@ -18,17 +18,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'بيانات QR مطلوبة' }, { status: 400 });
     }
 
-    // Parse QR data
-    let registrationNumber: string;
+    // Parse QR data. Two possible shapes:
+    //  - { token: "<secure random qr_token>", app: "seerah-conf" }  (manual invitations — preferred, secure)
+    //  - { reg: "<registration_number>", app: "seerah-conf" }        (legacy / public registrations)
+    //  - a bare string (manual code entry) — tried as registration_number
+    let qrToken: string | null = null;
+    let registrationNumber: string | null = null;
+
     try {
       const parsed = JSON.parse(qr_data);
-      registrationNumber = parsed.reg;
+      if (parsed.token) qrToken = parsed.token;
+      else if (parsed.reg) registrationNumber = parsed.reg;
     } catch {
-      // Maybe it's a plain registration number
+      // Not JSON — treat as a plain registration number typed manually.
       registrationNumber = qr_data.trim();
     }
 
-    if (!registrationNumber) {
+    if (!qrToken && !registrationNumber) {
       return NextResponse.json({ success: false, message: 'رمز QR غير صالح' }, { status: 400 });
     }
 
@@ -36,17 +42,20 @@ export async function POST(request: NextRequest) {
 
     // ATOMIC UPDATE: only update if status is still 'registered'
     // This prevents race conditions — two simultaneous scans can't both succeed
-    const { data: updated, error: updateError } = await supabase
+    let updateQuery = supabase
       .from('attendees')
       .update({
         attendance_status: 'attended',
         attendance_date: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       })
-      .eq('registration_number', registrationNumber)
-      .eq('attendance_status', 'registered') // Only update if NOT already attended
-      .select()
-      .maybeSingle();
+      .eq('attendance_status', 'registered'); // Only update if NOT already attended
+
+    updateQuery = qrToken
+      ? updateQuery.eq('qr_token', qrToken)
+      : updateQuery.eq('registration_number', registrationNumber!);
+
+    const { data: updated, error: updateError } = await updateQuery.select().maybeSingle();
 
     if (updateError) {
       console.error('Update error:', updateError);
@@ -64,11 +73,12 @@ export async function POST(request: NextRequest) {
 
     // No rows updated → either already attended or not found
     // Fetch to determine which case
-    const { data: attendee, error: findError } = await supabase
-      .from('attendees')
-      .select('*')
-      .eq('registration_number', registrationNumber)
-      .maybeSingle();
+    let findQuery = supabase.from('attendees').select('*');
+    findQuery = qrToken
+      ? findQuery.eq('qr_token', qrToken)
+      : findQuery.eq('registration_number', registrationNumber!);
+
+    const { data: attendee, error: findError } = await findQuery.maybeSingle();
 
     if (findError || !attendee) {
       return NextResponse.json({ success: false, message: 'لم يتم العثور على هذا المشارك' }, { status: 404 });

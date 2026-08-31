@@ -41,6 +41,7 @@ export default function ManualInvitationsPage() {
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDownloading, setBulkDownloading] = useState(false);
+  const [exportingExcel, setExportingExcel] = useState(false);
 
   const getToken = () => localStorage.getItem('admin_token') || '';
 
@@ -156,6 +157,38 @@ export default function ManualInvitationsPage() {
     }
   };
 
+  const downloadAcceptedExcel = async () => {
+    setExportingExcel(true);
+    try {
+      const response = await fetch('/api/attendees/export-accepted-manual', {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      if (response.status === 401) {
+        router.replace('/admin');
+        return;
+      }
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        alert(data?.error || 'حدث خطأ أثناء التصدير');
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `المقبولون-يدوياً-${new Date().toISOString().slice(0, 10)}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Excel export error:', e);
+      alert('حدث خطأ في الاتصال');
+    } finally {
+      setExportingExcel(false);
+    }
+  };
   const deliveredCount = attendees.filter((a) => a.delivery_status === 'delivered').length;
   const attendedCount = attendees.filter((a) => a.attendance_status === 'attended').length;
   const allSelected = attendees.length > 0 && selectedIds.size === attendees.length;
@@ -192,6 +225,24 @@ export default function ManualInvitationsPage() {
           onChange={(e) => setSearch(e.target.value)}
           className="input-islamic w-full px-4 py-2.5 rounded-xl text-sm"
         />
+
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="text-xs" style={{ color: '#777' }}>
+            يُصدَّر فقط المقبولون (approved) من الدعوات اليدوية.
+          </div>
+          <button
+            onClick={downloadAcceptedExcel}
+            disabled={exportingExcel}
+            className="px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2"
+            style={{ background: 'rgba(45,110,45,0.1)', color: 'var(--color-green-dark)', border: '1px solid rgba(45,110,45,0.3)' }}
+          >
+            {exportingExcel ? (
+              <><span className="spinner w-4 h-4" style={{ borderWidth: '2px' }} /><span>جاري التصدير...</span></>
+            ) : (
+              <span>📗 تصدير المقبولين إلى Excel</span>
+            )}
+          </button>
+        </div>
 
         {attendees.length > 0 && (
           <div className="flex items-center justify-between flex-wrap gap-2">

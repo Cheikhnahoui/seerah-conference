@@ -162,7 +162,7 @@ export default function ManualInvitationsPage() {
   const downloadAcceptedExcel = async () => {
     setExportingExcel(true);
     setExcelProgress({ done: 0, total: 0 });
-    const BATCH = 500;
+    const BATCH = 100;
     try {
       let offset = 0;
       let total = Infinity;

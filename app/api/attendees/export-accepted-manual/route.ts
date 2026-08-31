@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
     // more than that in a single serverless invocation risks hitting
     // the platform's execution time limit. Large lists are exported
     // as multiple sequential files instead (handled by the client).
-    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '500')));
+    const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '100')));
 
     const supabase = createServerSupabase();
 
@@ -80,21 +80,30 @@ export async function GET(request: NextRequest) {
     const QR_PX = 130; // square QR image size in pixels
     const QR_PT = QR_PX * 0.75; // px -> points, for row height
 
+    // Generate all QR PNGs in parallel first — much faster than
+    // awaiting each one sequentially inside the sheet-building loop,
+    // which matters a lot when we're racing the platform's execution
+    // time limit.
+    const qrBuffers = await Promise.all(
+      attendees.map((a) => {
+        const qrPayload = a.qr_token
+          ? JSON.stringify({ token: a.qr_token, app: 'seerah-conf' })
+          : JSON.stringify({ reg: a.registration_number, app: 'seerah-conf' });
+
+        return QRCode.toBuffer(qrPayload, {
+          width: QR_PX,
+          margin: 1,
+          color: { dark: '#1a4a1a', light: '#ffffff' },
+          errorCorrectionLevel: 'H',
+          type: 'png',
+        });
+      })
+    );
+
     for (let i = 0; i < attendees.length; i++) {
       const a = attendees[i];
       const rowNumber = i + 2; // header is row 1
-
-      const qrPayload = a.qr_token
-        ? JSON.stringify({ token: a.qr_token, app: 'seerah-conf' })
-        : JSON.stringify({ reg: a.registration_number, app: 'seerah-conf' });
-
-      const pngBuffer = await QRCode.toBuffer(qrPayload, {
-        width: QR_PX,
-        margin: 1,
-        color: { dark: '#1a4a1a', light: '#ffffff' },
-        errorCorrectionLevel: 'H',
-        type: 'png',
-      });
+      const pngBuffer = qrBuffers[i];
 
       const row = sheet.getRow(rowNumber);
       row.getCell(1).value = a.full_name;

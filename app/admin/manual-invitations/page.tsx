@@ -157,31 +157,53 @@ export default function ManualInvitationsPage() {
     }
   };
 
+  const [excelProgress, setExcelProgress] = useState({ done: 0, total: 0 });
+
   const downloadAcceptedExcel = async () => {
     setExportingExcel(true);
+    setExcelProgress({ done: 0, total: 0 });
+    const BATCH = 500;
     try {
-      const response = await fetch('/api/attendees/export-accepted-manual', {
-        headers: { Authorization: `Bearer ${getToken()}` },
-      });
+      let offset = 0;
+      let total = Infinity;
+      let fileIndex = 1;
+      let totalFiles = 1;
 
-      if (response.status === 401) {
-        router.replace('/admin');
-        return;
+      while (offset < total) {
+        const response = await fetch(`/api/attendees/export-accepted-manual?offset=${offset}&limit=${BATCH}`, {
+          headers: { Authorization: `Bearer ${getToken()}` },
+        });
+
+        if (response.status === 401) {
+          router.replace('/admin');
+          return;
+        }
+
+        if (!response.ok) {
+          const data = await response.json().catch(() => null);
+          alert(data?.error || 'حدث خطأ أثناء التصدير');
+          return;
+        }
+
+        total = parseInt(response.headers.get('X-Total-Count') || '0');
+        totalFiles = Math.max(1, Math.ceil(total / BATCH));
+        const returned = parseInt(response.headers.get('X-Returned-Count') || '0');
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        const suffix = totalFiles > 1 ? `-جزء-${fileIndex}-من-${totalFiles}` : '';
+        link.download = `المقبولون-يدوياً${suffix}-${new Date().toISOString().slice(0, 10)}.xlsx`;
+        link.click();
+        URL.revokeObjectURL(url);
+
+        offset += returned || BATCH;
+        fileIndex += 1;
+        setExcelProgress({ done: Math.min(offset, total), total });
+
+        if (returned === 0) break; // safety: avoid infinite loop
       }
-
-      if (!response.ok) {
-        const data = await response.json().catch(() => null);
-        alert(data?.error || 'حدث خطأ أثناء التصدير');
-        return;
-      }
-
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `المقبولون-يدوياً-${new Date().toISOString().slice(0, 10)}.xlsx`;
-      link.click();
-      URL.revokeObjectURL(url);
     } catch (e) {
       console.error('Excel export error:', e);
       alert('حدث خطأ في الاتصال');
@@ -237,7 +259,12 @@ export default function ManualInvitationsPage() {
             style={{ background: 'rgba(45,110,45,0.1)', color: 'var(--color-green-dark)', border: '1px solid rgba(45,110,45,0.3)' }}
           >
             {exportingExcel ? (
-              <><span className="spinner w-4 h-4" style={{ borderWidth: '2px' }} /><span>جاري التصدير...</span></>
+              <>
+                <span className="spinner w-4 h-4" style={{ borderWidth: '2px' }} />
+                <span>
+                  جاري التصدير{excelProgress.total > 0 ? ` (${excelProgress.done} / ${excelProgress.total})` : '...'}
+                </span>
+              </>
             ) : (
               <span>📗 تصدير المقبولين إلى Excel</span>
             )}

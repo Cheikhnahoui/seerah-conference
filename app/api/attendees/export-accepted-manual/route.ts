@@ -13,6 +13,8 @@ import { verifyAdminToken } from '@/lib/utils';
  * remains fully compatible with the existing check-in system. No new
  * or incompatible QR format is introduced.
  */
+export const maxDuration = 60;
+
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('Authorization');
@@ -21,13 +23,35 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 });
     }
 
+    const { searchParams } = new URL(request.url);
+    const offset = Math.max(0, parseInt(searchParams.get('offset') || '0'));
+    // Capped at 500 per request — generating & embedding QR images for
+    // more than that in a single serverless invocation risks hitting
+    // the platform's execution time limit. Large lists are exported
+    // as multiple sequential files instead (handled by the client).
+    const limit = Math.min(500, Math.max(1, parseInt(searchParams.get('limit') || '500')));
+
     const supabase = createServerSupabase();
+
+    // First, get the total count so the client knows how many pages/files to request.
+    const { count: totalCount, error: countError } = await supabase
+      .from('attendees')
+      .select('*', { count: 'exact', head: true })
+      .eq('is_manual', true)
+      .eq('approval_status', 'approved');
+
+    if (countError) {
+      console.error('Export count error:', countError);
+      return NextResponse.json({ success: false, error: 'خطأ في جلب العدد' }, { status: 500 });
+    }
+
     const { data: attendees, error } = await supabase
       .from('attendees')
       .select('full_name, qr_token, registration_number')
       .eq('is_manual', true)
       .eq('approval_status', 'approved')
-      .order('full_name', { ascending: true });
+      .order('full_name', { ascending: true })
+      .range(offset, offset + limit - 1);
 
     if (error) {
       console.error('Export query error:', error);
@@ -97,6 +121,9 @@ export async function GET(request: NextRequest) {
       headers: {
         'Content-Type': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
         'Content-Disposition': `attachment; filename="المقبولون-يدوياً-${new Date().toISOString().slice(0, 10)}.xlsx"`,
+        'X-Total-Count': String(totalCount ?? attendees.length),
+        'X-Offset': String(offset),
+        'X-Returned-Count': String(attendees.length),
       },
     });
   } catch (error) {

@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
       row.getCell(1).font = { size: 12 };
       row.height = QR_PT;
 
-      const imageId = workbook.addImage({ buffer: pngBuffer, extension: 'png' });
+      const imageId = workbook.addImage({ buffer: Buffer.from(pngBuffer) as any, extension: 'png' });
 
       // Same width/height as the source image preserves aspect ratio
       // exactly (it's already square) and fills the cell fully —

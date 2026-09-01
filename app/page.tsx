@@ -2,6 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { RegistrationForm } from '@/components/RegistrationForm';
+import { InvitationCard } from '@/components/InvitationCard';
+import { Attendee } from '@/types';
 import { LangProvider, LangToggle, useLang } from '@/lib/i18n';
 import { translateDateText } from '@/lib/dateFormat';
 import { translateLocation } from '@/lib/venueTranslations';
@@ -42,6 +44,7 @@ const DEFAULT_CONFIG: HomeConfig = {
 
 function HomeContent() {
   const { t, lang } = useLang();
+  const [registeredAttendee, setRegisteredAttendee] = useState<Attendee | null>(null);
   const [config, setConfig] = useState<HomeConfig>(DEFAULT_CONFIG);
 
   useEffect(() => {
@@ -61,8 +64,6 @@ function HomeContent() {
     });
   }, []);
 
-  // Date and location are ALWAYS derived from the same source text,
-  // so the Arabic and French pages can never disagree again.
   const displayDate =
     lang === 'fr'
       ? `${translateDateText(config.conf_date_hijri)} (${translateDateText(config.conf_date_gregorian)})`
@@ -146,7 +147,19 @@ function HomeContent() {
       <div className="h-1.5" style={{ background: 'linear-gradient(90deg, var(--color-green), var(--color-gold), var(--color-green))' }} />
 
       <div className="container mx-auto px-4 py-10 max-w-2xl">
-        <RegistrationForm />
+        {!registeredAttendee ? (
+          <RegistrationForm onSuccess={setRegisteredAttendee} />
+        ) : (
+          <div className="animate-[slideUp_0.5s_ease-out]">
+            <InvitationCard attendee={registeredAttendee} />
+            <div className="text-center mt-6">
+              <button onClick={() => setRegisteredAttendee(null)}
+                className="text-sm hover:underline" style={{ color: 'var(--color-green)' }}>
+                {t('register_another')}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
 
       <footer className="text-center py-8 mt-4" style={{ borderTop: '1px solid var(--color-border)' }}>

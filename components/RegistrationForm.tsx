@@ -1,14 +1,14 @@
 'use client';
 
 import { useState } from 'react';
-import { AttendeeFormData } from '@/types';
+import { Attendee, AttendeeFormData } from '@/types';
 import { validateName } from '@/lib/utils';
 import { toE164, isValidPhoneForCountry, DEFAULT_COUNTRY, type CountryCode } from '@/lib/phone';
 import { PhoneInput } from '@/components/PhoneInput';
 import { useLang } from '@/lib/i18n';
 
 interface RegistrationFormProps {
-  onSuccess?: () => void;
+  onSuccess: (attendee: Attendee) => void;
 }
 
 export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
@@ -21,7 +21,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
   const [errors, setErrors] = useState<Partial<AttendeeFormData & { phone_number: string }>>({});
   const [loading, setLoading] = useState(false);
   const [serverError, setServerError] = useState('');
-  const [submitted, setSubmitted] = useState(false);
 
   const validate = (): boolean => {
     const newErrors: Partial<AttendeeFormData & { phone_number: string }> = {};
@@ -62,12 +61,9 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       });
       const result = await response.json();
       if (result.success) {
-        // The invitation is NOT handed over immediately — the request
-        // is queued as "pending" and must be manually approved by an
-        // admin (identity check over WhatsApp) before it becomes
-        // retrievable. Show a waiting message instead of the card.
-        setSubmitted(true);
-        onSuccess?.();
+        // Original behavior: the invitation card is issued immediately,
+        // no pending/approval step.
+        onSuccess(result.data);
       } else {
         setServerError(result.error || t('error_connection'));
       }
@@ -77,28 +73,6 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
       setLoading(false);
     }
   };
-
-  if (submitted) {
-    return (
-      <div className="rounded-2xl p-6 md:p-10 max-w-xl mx-auto animate-[slideUp_0.6s_ease-out] text-center"
-        style={{ background: '#ffffff', border: '1px solid rgba(184, 134, 11, 0.25)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-        <div className="text-5xl mb-4">⏳</div>
-        <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--color-green-dark)', fontFamily: 'Cairo, sans-serif' }}>
-          {lang === 'fr' ? 'Demande reçue' : 'تم استلام طلبك'}
-        </h3>
-        <p className="text-base leading-relaxed" style={{ color: '#444444', fontFamily: lang === 'fr' ? undefined : 'Cairo, sans-serif' }}>
-          {lang === 'fr'
-            ? 'Votre demande a bien été reçue. Veuillez patienter. Nous allons vérifier votre identité via WhatsApp et nous vous répondrons après la validation.'
-            : 'تم استلام طلبك بنجاح. يرجى الانتظار قليلاً — سنتحقق من هويتك عبر واتساب وسنُعلمك فور الموافقة.'}
-        </p>
-        <p className="text-xs mt-6" style={{ color: '#888888' }}>
-          {lang === 'fr'
-            ? 'Vous pourrez récupérer votre invitation depuis "Récupérer mon invitation" une fois approuvée.'
-            : 'يمكنك استرجاع دعوتك من صفحة "استرجاع الدعوة" فور الموافقة عليها.'}
-        </p>
-      </div>
-    );
-  }
 
   return (
     <div className="rounded-2xl p-6 md:p-10 max-w-xl mx-auto animate-[slideUp_0.6s_ease-out]"

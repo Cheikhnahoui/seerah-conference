@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
         occupation: occupation?.trim() || null,
         qr_code: null,
         attendance_status: 'registered',
-        approval_status: 'pending',
+        approval_status: 'approved',
         registration_date: new Date().toISOString(),
       })
       .select()

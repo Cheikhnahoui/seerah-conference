@@ -89,6 +89,16 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
             ? "Veuillez patienter. Nous vous contacterons via WhatsApp pour vérifier votre identité. Une fois votre identité vérifiée, vous recevrez votre carte d'invitation."
             : 'يرجى الانتظار. سنتواصل معك عبر واتساب للتحقق من هويتك. بعد التحقق من هويتك، ستحصل على بطاقة دعوتك.'}
         </p>
+        <div className="mt-6 pt-5" style={{ borderTop: '1px dashed rgba(184,134,11,0.3)' }}>
+          <p className="text-sm" style={{ color: '#666666', fontFamily: lang === 'fr' ? undefined : 'Cairo, sans-serif' }}>
+            {lang === 'fr'
+              ? 'Pour plus d\'informations ou en cas de retard de validation, contactez ces numéros :'
+              : 'للمزيد من المعلومات أو في حالة تأخر الموافقة تواصل مع هذه الأرقام:'}
+          </p>
+          <p className="text-base font-bold mt-2" dir="ltr" style={{ color: 'var(--color-green-dark)', letterSpacing: '0.02em' }}>
+            26990366 - 43010210 - 34653434
+          </p>
+        </div>
       </div>
     );
   }
@@ -122,10 +132,10 @@ export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
           {errors.full_name && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{errors.full_name}</p>}
         </div>
 
-        {/* Phone */}
+        {/* Phone (WhatsApp) */}
         <div>
           <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-            {t('phone')} <span style={{ color: 'var(--color-gold)' }}>*</span>
+            {lang === 'fr' ? 'Numéro WhatsApp' : 'رقم الواتساب'} <span style={{ color: 'var(--color-gold)' }}>*</span>
           </label>
           <PhoneInput
             value={phoneLocal}

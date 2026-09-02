@@ -1,164 +1,146 @@
-'use client';
+import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabase } from '@/lib/supabase';
+import { generateRegistrationNumber, validateName, validatePhone, formatPhoneNumber, verifyAdminToken } from '@/lib/utils';
+import { AttendeeFormData } from '@/types';
+import { Ratelimit } from '@upstash/ratelimit';
+import { Redis } from '@upstash/redis';
 
-import { useState } from 'react';
-import { Attendee, AttendeeFormData } from '@/types';
-import { validateName } from '@/lib/utils';
-import { toE164, isValidPhoneForCountry, DEFAULT_COUNTRY, type CountryCode } from '@/lib/phone';
-import { PhoneInput } from '@/components/PhoneInput';
-import { useLang } from '@/lib/i18n';
+// Rate limit: max 3 registration attempts per IP+phone per 10 minutes
+const registrationRatelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.fixedWindow(3, '10m'),
+  prefix: 'ratelimit:registration',
+});
 
-interface RegistrationFormProps {
-  onSuccess: (attendee: Attendee) => void;
+export async function POST(request: NextRequest) {
+  try {
+    const ip =
+      request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+      request.headers.get('x-real-ip') ||
+      'unknown';
+
+    const body: AttendeeFormData = await request.json();
+    const { full_name, phone_number, city, occupation } = body;
+
+    if (!validateName(full_name)) {
+      return NextResponse.json({ success: false, error: 'اسم غير صالح' }, { status: 400 });
+    }
+    if (!validatePhone(phone_number)) {
+      return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
+    }
+
+    // Client sends E.164 (e.g. "+22222123456"); this is now stored as-is.
+    const cleanedPhone = formatPhoneNumber(phone_number);
+
+    // Rate limit key = IP + phone → each person blocked independently
+    const rateLimitKey = `${ip}:${cleanedPhone}`;
+    const { success, remaining, reset } = await registrationRatelimit.limit(rateLimitKey);
+
+    if (!success) {
+      const retryAfterSeconds = Math.ceil((reset - Date.now()) / 1000);
+      return NextResponse.json(
+        {
+          success: false,
+          error: `لقد تجاوزت الحد المسموح به. يرجى الانتظار ${Math.ceil(retryAfterSeconds / 60)} دقيقة قبل المحاولة مجدداً.`,
+        },
+        {
+          status: 429,
+          headers: { 'Retry-After': String(retryAfterSeconds), 'X-RateLimit-Remaining': String(remaining) },
+        }
+      );
+    }
+    const supabase = createServerSupabase();
+
+    // Check for a duplicate against both the modern E.164 form and the
+    // legacy digits-only form (no leading "+") that older records may
+    // still use, so we never miss an existing registration.
+    const legacyDigits = cleanedPhone.replace(/^\+/, '');
+    const { data: existing } = await supabase
+      .from('attendees')
+      .select('id, registration_number')
+      .or(`phone_number.eq.${cleanedPhone},phone_number.eq.${legacyDigits}`)
+      .maybeSingle();
+
+    if (existing) {
+      return NextResponse.json(
+        { success: false, error: 'رقم الهاتف مسجل مسبقاً. يمكنك استرجاع دعوتك من صفحة الاسترجاع.' },
+        { status: 409 }
+      );
+    }
+
+    const registrationNumber = generateRegistrationNumber();
+
+    const { data: attendee, error } = await supabase
+      .from('attendees')
+      .insert({
+        registration_number: registrationNumber,
+        full_name: full_name.trim(),
+        phone_number: cleanedPhone,
+        city: city?.trim() || null,
+        occupation: occupation?.trim() || null,
+        qr_code: null,
+        attendance_status: 'registered',
+        approval_status: 'pending',
+        registration_date: new Date().toISOString(),
+      })
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase error:', error);
+      return NextResponse.json({ success: false, error: 'حدث خطأ أثناء الحفظ' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true, data: attendee }, { status: 201 });
+  } catch (error) {
+    console.error('Registration error:', error);
+    return NextResponse.json({ success: false, error: 'خطأ داخلي في الخادم' }, { status: 500 });
+  }
 }
 
-export function RegistrationForm({ onSuccess }: RegistrationFormProps) {
-  const { t, lang } = useLang();
-  const [formData, setFormData] = useState<AttendeeFormData>({
-    full_name: '', phone_number: '', city: '', occupation: '',
-  });
-  const [phoneLocal, setPhoneLocal] = useState('');
-  const [phoneCountry, setPhoneCountry] = useState<CountryCode>(DEFAULT_COUNTRY);
-  const [errors, setErrors] = useState<Partial<AttendeeFormData & { phone_number: string }>>({});
-  const [loading, setLoading] = useState(false);
-  const [serverError, setServerError] = useState('');
-
-  const validate = (): boolean => {
-    const newErrors: Partial<AttendeeFormData & { phone_number: string }> = {};
-    if (!validateName(formData.full_name)) newErrors.full_name = t('full_name_error');
-    if (!isValidPhoneForCountry(phoneLocal, phoneCountry)) {
-      newErrors.phone_number = t('phone_error');
-    }
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
-
-  const handleNameChange = (value: string) => {
-    setFormData({ ...formData, full_name: value.replace(/[0-9]/g, '') });
-  };
-
-  const handlePhoneChange = (value: string, country: CountryCode) => {
-    setPhoneLocal(value);
-    setPhoneCountry(country);
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    const e164 = toE164(phoneLocal, phoneCountry);
-    if (!e164) {
-      setErrors((prev) => ({ ...prev, phone_number: t('phone_error') }));
-      return;
+export async function GET(request: NextRequest) {
+  try {
+    const authHeader = request.headers.get('Authorization');
+    const token = authHeader?.replace('Bearer ', '');
+    if (!token || !verifyAdminToken(token)) {
+      return NextResponse.json({ success: false, error: 'غير مصرح' }, { status: 401 });
     }
 
-    setLoading(true);
-    setServerError('');
-    try {
-      const response = await fetch('/api/attendees', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...formData, phone_number: e164 }),
-      });
-      const result = await response.json();
-      if (result.success) {
-        // Original behavior: the invitation card is issued immediately,
-        // no pending/approval step.
-        onSuccess(result.data);
-      } else {
-        setServerError(result.error || t('error_connection'));
-      }
-    } catch {
-      setServerError(t('error_connection'));
-    } finally {
-      setLoading(false);
+    const supabase = createServerSupabase();
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get('search') || '';
+    const city = searchParams.get('city') || '';
+    const manualOnly = searchParams.get('manual') === 'true';
+    const page = parseInt(searchParams.get('page') || '1');
+    const limit = parseInt(searchParams.get('limit') || '50');
+    const offset = (page - 1) * limit;
+
+    let query = supabase
+      .from('attendees')
+      .select('id, registration_number, qr_token, full_name, phone_number, city, occupation, attendance_status, approval_status, is_manual, delivery_status, registration_date, attendance_date, created_at', { count: 'exact' })
+      .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1);
+
+    if (manualOnly) {
+      query = query.eq('is_manual', true);
     }
-  };
 
-  return (
-    <div className="rounded-2xl p-6 md:p-10 max-w-xl mx-auto animate-[slideUp_0.6s_ease-out]"
-      style={{ background: '#ffffff', border: '1px solid rgba(184, 134, 11, 0.25)', boxShadow: '0 4px 24px rgba(0,0,0,0.08)' }}>
-      <div className="text-center mb-8">
-        <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--color-green-dark)', fontFamily: 'Cairo, sans-serif' }}>
-          {t('register_now')}
-        </h3>
-        <p className="text-sm" style={{ color: '#555555' }}>{t('register_subtitle')}</p>
-      </div>
+    if (search) {
+      query = query.or(`full_name.ilike.%${search}%,phone_number.ilike.%${search}%,registration_number.ilike.%${search}%`);
+    }
+    if (city) {
+      query = query.ilike('city', `%${city}%`);
+    }
 
-      {serverError && (
-        <div className="alert-error rounded-xl p-4 mb-6 text-center text-sm">{serverError}</div>
-      )}
+    const { data, error, count } = await query;
 
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Full Name */}
-        <div>
-          <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-            {t('full_name')} <span style={{ color: 'var(--color-gold)' }}>*</span>
-          </label>
-          <input type="text" value={formData.full_name}
-            onChange={(e) => handleNameChange(e.target.value)}
-            placeholder={t('full_name_placeholder')}
-            className="input-islamic w-full px-4 py-3 rounded-xl text-base"
-            style={{ fontFamily: 'Cairo, sans-serif', color: '#1a1a1a' }}
-            disabled={loading} />
-          {errors.full_name && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{errors.full_name}</p>}
-        </div>
+    if (error) {
+      return NextResponse.json({ success: false, error: 'خطأ في جلب البيانات' }, { status: 500 });
+    }
 
-        {/* Phone */}
-        <div>
-          <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-            {t('phone')} <span style={{ color: 'var(--color-gold)' }}>*</span>
-          </label>
-          <PhoneInput
-            value={phoneLocal}
-            country={phoneCountry}
-            onChange={handlePhoneChange}
-            lang={lang}
-            disabled={loading}
-          />
-          {errors.phone_number && <p className="text-xs mt-1" style={{ color: '#dc2626' }}>{errors.phone_number}</p>}
-        </div>
-
-        {/* City */}
-        <div>
-          <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-            {t('city')} <span style={{ color: '#888888', fontSize: '0.75rem' }}>{t('city_optional')}</span>
-          </label>
-          <input type="text" value={formData.city}
-            onChange={(e) => setFormData({ ...formData, city: e.target.value })}
-            placeholder={t('city_placeholder')}
-            className="input-islamic w-full px-4 py-3 rounded-xl text-base"
-            style={{ fontFamily: 'Cairo, sans-serif', color: '#1a1a1a' }}
-            disabled={loading} />
-        </div>
-
-        {/* Occupation */}
-        <div>
-          <label className="block text-sm font-medium mb-2" style={{ color: '#1a1a1a' }}>
-            {t('occupation')} <span style={{ color: '#888888', fontSize: '0.75rem' }}>{t('city_optional')}</span>
-          </label>
-          <input type="text" value={formData.occupation}
-            onChange={(e) => setFormData({ ...formData, occupation: e.target.value })}
-            placeholder={t('occupation_placeholder')}
-            className="input-islamic w-full px-4 py-3 rounded-xl text-base"
-            style={{ fontFamily: 'Cairo, sans-serif', color: '#1a1a1a' }}
-            disabled={loading} />
-        </div>
-
-        {/* Submit */}
-        <button type="submit" disabled={loading}
-          className="btn-gold w-full py-4 rounded-xl text-lg font-bold mt-4 flex items-center justify-center gap-3"
-          style={{ fontFamily: 'Cairo, sans-serif', cursor: loading ? 'not-allowed' : 'pointer' }}>
-          {loading ? (
-            <><span className="spinner w-5 h-5" style={{ borderWidth: '2px', borderColor: 'rgba(255,255,255,0.3)', borderTopColor: '#fff' }} /><span>{t('submitting')}</span></>
-          ) : (
-            <><span>{t('submit')}</span><span>🎫</span></>
-          )}
-        </button>
-      </form>
-
-      <p className="text-center text-xs mt-6" style={{ color: '#888888', fontFamily: 'Cairo, sans-serif', lineHeight: '1.8' }}>
-        {t('slogan')}
-      </p>
-    </div>
-  );
+    return NextResponse.json({ success: true, data, count });
+  } catch (error) {
+    console.error('GET attendees error:', error);
+    return NextResponse.json({ success: false, error: 'خطأ داخلي' }, { status: 500 });
+  }
 }

@@ -16,7 +16,7 @@ export default function InvitationPage() {
   useEffect(() => {
     const fetchAttendee = async () => {
       try {
-        const response = await fetch(`/api/attendees/${params.id}`);
+        const response = await fetch(`/api/invitation/${params.id}`);
         const data = await response.json();
         if (data.success) {
           setAttendee(data.data);

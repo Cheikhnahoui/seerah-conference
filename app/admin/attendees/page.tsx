@@ -21,6 +21,20 @@ interface EditForm {
   occupation: string;
 }
 
+/**
+ * Builds a wa.me link that opens WhatsApp directly to a chat with
+ * this specific attendee, with a personalized message PRE-FILLED
+ * (not sent) containing the link to THEIR invitation card only.
+ * The admin reviews and manually presses Send inside WhatsApp.
+ */
+function buildWhatsAppLink(a: Attendee): string {
+  const digits = a.phone_number.replace(/\D/g, ''); // wa.me needs no leading '+'
+  const origin = typeof window !== 'undefined' ? window.location.origin : '';
+  const invitationUrl = `${origin}/invitation/${a.id}`;
+  const message = `السلام عليكم، تم التحقق من هويتك، وهذه بطاقة دعوتك: ${invitationUrl}`;
+  return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
+}
+
 export default function AttendeesPage() {
   const [attendees, setAttendees] = useState<Attendee[]>([]);
   const [loading, setLoading] = useState(true);
@@ -237,7 +251,7 @@ export default function AttendeesPage() {
           {/* DESKTOP: Table view */}
           <div className="block glass rounded-2xl overflow-hidden" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
             <div className="overflow-x-auto">
-              <table className="w-full table-islamic" style={{ minWidth: '800px' }}>
+              <table className="w-full table-islamic" style={{ minWidth: '900px' }}>
                 <thead>
                   <tr>
                     <th style={{ width: '40px' }}>
@@ -277,7 +291,7 @@ export default function AttendeesPage() {
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
                           <td><input value={editForm.occupation} onChange={(e) => setEditForm({ ...editForm, occupation: e.target.value })}
                             className="input-islamic px-2 py-1 rounded-lg text-sm w-full" /></td>
-                          <td>{approvalBadge((a as any).approval_status)}</td>
+                          <td>{approvalBadge(a.approval_status)}</td>
                           <td><span className={`px-2 py-1 rounded-full text-xs ${a.attendance_status === 'attended' ? 'badge-attended' : 'badge-registered'}`}>
                             {a.attendance_status === 'attended' ? '✅ حاضر' : '🕐 مسجل'}</span></td>
                           <td className="text-xs" style={{ color: '#333333' }}>{formatDate(a.registration_date)}</td>
@@ -301,11 +315,11 @@ export default function AttendeesPage() {
                               <span style={{ color: '#999' }}>بدون رقم</span>
                             ) : (
                               <a
-                                href={`https://wa.me/${a.phone_number.replace(/\D/g, '')}`}
+                                href={buildWhatsAppLink(a)}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 style={{ color: '#1a5c2a', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-                                title="فتح واتساب"
+                                title="فتح واتساب مع رسالة جاهزة تحتوي رابط بطاقته"
                               >
                                 {formatForDisplay(a.phone_number)}
                               </a>
@@ -313,18 +327,18 @@ export default function AttendeesPage() {
                           </td>
                           <td>{a.city || '—'}</td>
                           <td className="text-xs">{a.occupation || '—'}</td>
-                          <td>{approvalBadge((a as any).approval_status)}</td>
+                          <td>{approvalBadge(a.approval_status)}</td>
                           <td><span className={`px-2 py-1 rounded-full text-xs ${a.attendance_status === 'attended' ? 'badge-attended' : 'badge-registered'}`}>
                             {a.attendance_status === 'attended' ? '✅ حاضر' : '🕐 مسجل'}</span></td>
                           <td className="text-xs" style={{ color: '#333333' }}>{formatDate(a.registration_date)}</td>
                           <td><div className="flex gap-1 flex-wrap">
-                            {(a as any).approval_status !== 'approved' && (
+                            {a.approval_status !== 'approved' && (
                               <button onClick={() => handleApproval(a.id, 'approved')} className="px-3 py-1 rounded-lg text-xs font-medium"
                                 style={{ background: 'rgba(45, 122, 95, 0.2)', border: '1px solid rgba(45, 122, 95, 0.4)', color: '#1a5c2a' }}>
                                 ✅ موافقة
                               </button>
                             )}
-                            {(a as any).approval_status !== 'rejected' && (
+                            {a.approval_status !== 'rejected' && (
                               <button onClick={() => handleApproval(a.id, 'rejected')} className="px-3 py-1 rounded-lg text-xs font-medium"
                                 style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239,68,68,0.35)', color: '#dc2626' }}>
                                 ❌ رفض

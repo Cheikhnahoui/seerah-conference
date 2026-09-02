@@ -31,7 +31,12 @@ function buildWhatsAppLink(a: Attendee): string {
   const digits = a.phone_number.replace(/\D/g, ''); // wa.me needs no leading '+'
   const origin = typeof window !== 'undefined' ? window.location.origin : '';
   const invitationUrl = `${origin}/invitation/${a.id}`;
-  const message = `السلام عليكم، تم التحقق من هويتك، وهذه بطاقة دعوتك: ${invitationUrl}`;
+  const message =
+    'مرحبا بكم معنا في رحاب الدورة التاسعة والثلاثين من المؤتمر الدولي للسيرة النبوية الذي ينظمه التجمع الثقافي الإسلامي برئاسة فضيلة الشيخ محمد الحافظ النحوي.\n' +
+    'ستنعقد هذه الدورة بحول اللـه بتاريخ 14 - 16 سبتمبر 2026، بمشاركة وحضور وفود عربية وإسلامية.\n' +
+    'مرحبا بكم في موعد متجدد مع السيرة العطرة وقيمها الخالدة ورسالتها الجامعة.\n' +
+    '#المؤتمر_الدولي_للسيرة_39\n' +
+    `رابط دعوتكم :\n${invitationUrl}`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(message)}`;
 }
 

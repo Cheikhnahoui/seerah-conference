@@ -38,6 +38,7 @@ export interface ConferenceConfig {
 
 export interface Stats {
   total_registered: number;
+  total_accepted: number;
   total_attended: number;
   attendance_rate: number;
   by_city: { city: string; count: number; attended: number }[];

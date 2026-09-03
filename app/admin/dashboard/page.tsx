@@ -36,6 +36,11 @@ export default function DashboardPage() {
     );
   }
 
+  const registered = stats?.total_registered || 0;
+  const accepted = stats?.total_accepted || 0;
+  const attended = stats?.total_attended || 0;
+  const rate = stats?.attendance_rate || 0;
+
   return (
     <div className="p-4 md:p-8">
       <div className="mb-8">
@@ -49,23 +54,24 @@ export default function DashboardPage() {
 
       {/* Stats cards */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <StatCard label="إجمالي المسجلين" value={stats?.total_registered || 0} icon="👥" color="#c9a84c" />
-        <StatCard label="إجمالي الحاضرين" value={stats?.total_attended || 0} icon="✅" color="#2d7a5f" />
-        <StatCard label="نسبة الحضور" value={`${stats?.attendance_rate || 0}%`} icon="📊" color="#1a5c4a" />
-        <StatCard label="لم يحضروا بعد" value={(stats?.total_registered || 0) - (stats?.total_attended || 0)} icon="⏳" color="#9a7a30" />
+        <StatCard label="إجمالي المسجلين" value={registered} icon="📝" color="#c9a84c" />
+        <StatCard label="المقبولون" value={accepted} icon="✅" color="#2d7a5f" />
+        <StatCard label="إجمالي الحاضرين" value={attended} icon="🎫" color="#1a5c4a" />
+        <StatCard label="لم يحضروا بعد (من المقبولين)" value={accepted - attended} icon="⏳" color="#9a7a30" />
       </div>
 
       {/* Attendance bar */}
       <div className="glass rounded-2xl p-6" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
-        <h2 className="text-base font-semibold mb-4" style={{ color: 'var(--color-gold)' }}>نسبة الحضور</h2>
+        <h2 className="text-base font-semibold mb-1" style={{ color: 'var(--color-gold)' }}>نسبة الحضور</h2>
+        <p className="text-xs mb-4" style={{ color: '#888' }}>محسوبة من المقبولين فقط ({accepted}) — وليس من إجمالي المسجلين</p>
         <div className="relative h-6 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.05)' }}>
           <div className="h-full rounded-full transition-all duration-1000"
-            style={{ width: `${stats?.attendance_rate || 0}%`, background: 'linear-gradient(90deg, var(--color-green), var(--color-gold))' }} />
+            style={{ width: `${rate}%`, background: 'linear-gradient(90deg, var(--color-green), var(--color-gold))' }} />
         </div>
         <div className="flex justify-between text-xs mt-2" style={{ color: '#444444' }}>
-          <span>{stats?.total_attended} حاضر</span>
-          <span>{stats?.attendance_rate}%</span>
-          <span>{stats?.total_registered} مسجل</span>
+          <span>{attended} حاضر</span>
+          <span>{rate}%</span>
+          <span>{accepted} مقبول</span>
         </div>
       </div>
 

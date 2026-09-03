@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Attendee } from '@/types';
 import { formatDate, exportToCSV } from '@/lib/utils';
 import { PhoneInput } from '@/components/PhoneInput';
@@ -47,6 +47,9 @@ export default function AttendeesPage() {
   const [cityFilter, setCityFilter] = useState('');
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const sentinelRef = useRef<HTMLDivElement>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editForm, setEditForm] = useState<EditForm>({
     full_name: '', phone_local: '', phone_country: DEFAULT_COUNTRY, city: '', occupation: '',
@@ -54,28 +57,71 @@ export default function AttendeesPage() {
   const [editPhoneError, setEditPhoneError] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
-  const limit = 20;
+  const limit = 50; // larger batch since there's no page navigation anymore
 
   const getToken = () => localStorage.getItem('admin_token') || '';
 
-  const fetchAttendees = useCallback(async () => {
+  // Initial load / whenever the search or city filter changes: reset
+  // the list and fetch page 1 fresh.
+  const fetchFirstPage = useCallback(async () => {
     setLoading(true);
     try {
-      const params = new URLSearchParams({ search, city: cityFilter, page: String(page), limit: String(limit) });
+      const params = new URLSearchParams({ search, city: cityFilter, page: '1', limit: String(limit) });
       const response = await fetch(`/api/attendees?${params}`, {
         headers: { Authorization: `Bearer ${getToken()}` },
       });
       const data = await response.json();
       if (data.success) {
-        setAttendees(data.data || []);
+        const fetched = data.data || [];
+        setAttendees(fetched);
         setTotal(data.count || 0);
+        setPage(1);
+        setHasMore(fetched.length < (data.count || 0));
       }
     } finally {
       setLoading(false);
     }
-  }, [search, cityFilter, page]);
+  }, [search, cityFilter]);
 
-  useEffect(() => { fetchAttendees(); }, [fetchAttendees]);
+  // Infinite scroll: fetch the next page and append it.
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextPage = page + 1;
+      const params = new URLSearchParams({ search, city: cityFilter, page: String(nextPage), limit: String(limit) });
+      const response = await fetch(`/api/attendees?${params}`, {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      const data = await response.json();
+      if (data.success) {
+        const fetched = data.data || [];
+        const newTotal = data.count ?? total;
+        setAttendees((prev) => {
+          const merged = [...prev, ...fetched];
+          setHasMore(merged.length < newTotal);
+          return merged;
+        });
+        setPage(nextPage);
+      }
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [page, search, cityFilter, loadingMore, hasMore, total]);
+
+  useEffect(() => { fetchFirstPage(); }, [fetchFirstPage]);
+
+  useEffect(() => {
+    if (!sentinelRef.current) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) loadMore();
+      },
+      { rootMargin: '300px' }
+    );
+    observer.observe(sentinelRef.current);
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   const handleDelete = async (id: string) => {
     if (!confirm('هل أنت متأكد من حذف هذا المشارك؟')) return;
@@ -83,7 +129,7 @@ export default function AttendeesPage() {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${getToken()}` },
     });
-    if ((await response.json()).success) fetchAttendees();
+    if ((await response.json()).success) fetchFirstPage();
   };
 
   const handleApproval = async (id: string, approval_status: 'approved' | 'rejected') => {
@@ -92,7 +138,7 @@ export default function AttendeesPage() {
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
       body: JSON.stringify({ approval_status }),
     });
-    if ((await response.json()).success) fetchAttendees();
+    if ((await response.json()).success) fetchFirstPage();
   };
 
   const handleBulkDelete = async () => {
@@ -109,7 +155,7 @@ export default function AttendeesPage() {
         )
       );
       setSelectedIds(new Set());
-      fetchAttendees();
+      fetchFirstPage();
     } finally {
       setBulkDeleting(false);
     }
@@ -164,7 +210,7 @@ export default function AttendeesPage() {
         occupation: editForm.occupation,
       }),
     });
-    if ((await response.json()).success) { setEditingId(null); fetchAttendees(); }
+    if ((await response.json()).success) { setEditingId(null); fetchFirstPage(); }
   };
 
   const handleExportCSV = () => {
@@ -199,7 +245,6 @@ export default function AttendeesPage() {
     XLSX.writeFile(wb, 'المشاركون.xlsx');
   };
 
-  const totalPages = Math.ceil(total / limit);
   const allSelected = attendees.length > 0 && selectedIds.size === attendees.length;
 
   return (
@@ -239,7 +284,7 @@ export default function AttendeesPage() {
         <input type="text" placeholder="فلترة بالمدينة..." value={cityFilter}
           onChange={(e) => { setCityFilter(e.target.value); setPage(1); }}
           className="input-islamic flex-1 px-4 py-2.5 rounded-xl text-sm sm:max-w-[200px]" />
-        <button onClick={fetchAttendees} className="btn-gold px-6 py-2.5 rounded-xl text-sm font-semibold">
+        <button onClick={fetchFirstPage} className="btn-gold px-6 py-2.5 rounded-xl text-sm font-semibold">
           🔍 بحث
         </button>
       </div>
@@ -365,16 +410,13 @@ export default function AttendeesPage() {
         </>
       )}
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-2 py-4 mt-4">
-          <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1}
-            className="px-4 py-2 rounded-lg text-sm disabled:opacity-30"
-            style={{ background: 'rgba(201, 168, 76, 0.1)', color: 'var(--color-gold)' }}>← السابق</button>
-          <span className="text-sm" style={{ color: '#333333' }}>{page} / {totalPages}</span>
-          <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages}
-            className="px-4 py-2 rounded-lg text-sm disabled:opacity-30"
-            style={{ background: 'rgba(201, 168, 76, 0.1)', color: 'var(--color-gold)' }}>التالي →</button>
+      {/* Infinite scroll trigger + loading indicator */}
+      {attendees.length > 0 && (
+        <div ref={sentinelRef} className="flex items-center justify-center py-6">
+          {loadingMore && <div className="spinner" />}
+          {!hasMore && !loadingMore && (
+            <p className="text-sm" style={{ color: '#888' }}>تم عرض جميع المشاركين ({total})</p>
+          )}
         </div>
       )}
     </div>

@@ -15,14 +15,27 @@ export async function GET(request: NextRequest) {
       .from('attendees')
       .select('*', { count: 'exact', head: true });
 
+    // Accepted (approved) registrations — used as the denominator for
+    // the attendance rate, since only approved people can actually
+    // attend/check in.
+    const { count: totalAccepted } = await supabase
+      .from('attendees')
+      .select('*', { count: 'exact', head: true })
+      .eq('approval_status', 'approved');
+
+    // Attendance is only meaningful among approved people, so this
+    // count is scoped to approved + attended for consistency with the
+    // rate calculation below.
     const { count: totalAttended } = await supabase
       .from('attendees')
       .select('*', { count: 'exact', head: true })
-      .eq('attendance_status', 'attended');
+      .eq('attendance_status', 'attended')
+      .eq('approval_status', 'approved');
 
     const { data: cityData } = await supabase
       .from('attendees')
-      .select('city, attendance_status')
+      .select('city, attendance_status, approval_status')
+      .eq('approval_status', 'approved')
       .limit(5000);
 
     const cityMap: Record<string, { total: number; attended: number }> = {};
@@ -38,14 +51,19 @@ export async function GET(request: NextRequest) {
       .sort((a, b) => b.count - a.count)
       .slice(0, 10);
 
-    const total = totalRegistered || 0;
+    const registered = totalRegistered || 0;
+    const accepted = totalAccepted || 0;
     const attended = totalAttended || 0;
-    const attendanceRate = total > 0 ? Math.round((attended / total) * 100) : 0;
+    // Attendance rate is calculated from ACCEPTED people only, not
+    // the total registered — someone who was never approved could
+    // never check in, so including them would understate the rate.
+    const attendanceRate = accepted > 0 ? Math.round((attended / accepted) * 100) : 0;
 
     return NextResponse.json({
       success: true,
       data: {
-        total_registered: total,
+        total_registered: registered,
+        total_accepted: accepted,
         total_attended: attended,
         attendance_rate: attendanceRate,
         by_city: byCity,

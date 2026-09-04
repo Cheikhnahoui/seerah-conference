@@ -57,6 +57,7 @@ export default function AttendeesPage() {
   const [editPhoneError, setEditPhoneError] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkDeleting, setBulkDeleting] = useState(false);
+  const [exportingSelfRegistered, setExportingSelfRegistered] = useState(false);
   const limit = 50; // larger batch since there's no page navigation anymore
 
   const getToken = () => localStorage.getItem('admin_token') || '';
@@ -213,6 +214,34 @@ export default function AttendeesPage() {
     if ((await response.json()).success) { setEditingId(null); fetchFirstPage(); }
   };
 
+  const handleExportSelfRegistered = async () => {
+    setExportingSelfRegistered(true);
+    try {
+      const response = await fetch('/api/attendees/export-self-registered', {
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        alert(data?.error || 'حدث خطأ أثناء التصدير');
+        return;
+      }
+
+      const blob = await response.blob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = 'self_registered_users.xlsx';
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error('Export self-registered error:', e);
+      alert('حدث خطأ في الاتصال');
+    } finally {
+      setExportingSelfRegistered(false);
+    }
+  };
+
   const handleExportCSV = () => {
     const exportData = attendees.map((a) => ({
       'رقم التسجيل': a.registration_number,
@@ -264,6 +293,11 @@ export default function AttendeesPage() {
               {bulkDeleting ? '...' : `🗑️ حذف المحدد (${selectedIds.size})`}
             </button>
           )}
+          <button onClick={handleExportSelfRegistered} disabled={exportingSelfRegistered}
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
+            style={{ background: 'rgba(26, 92, 42, 0.15)', border: '1px solid rgba(26, 92, 42, 0.4)', color: 'var(--color-green-dark)' }}>
+            {exportingSelfRegistered ? '...' : '📗 تصدير المسجلين ذاتياً'}
+          </button>
           <button onClick={handleExportCSV} className="px-4 py-2 rounded-lg text-sm font-medium transition-opacity hover:opacity-80"
             style={{ background: 'rgba(45, 122, 95, 0.2)', border: '1px solid rgba(45, 122, 95, 0.4)', color: '#6ee7b7' }}>
             📥 CSV

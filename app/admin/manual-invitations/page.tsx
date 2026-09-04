@@ -158,6 +158,38 @@ export default function ManualInvitationsPage() {
   };
 
   const [excelProgress, setExcelProgress] = useState({ done: 0, total: 0 });
+  const [showDeleteAllDialog, setShowDeleteAllDialog] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
+  const [deletingAll, setDeletingAll] = useState(false);
+
+  const handleDeleteAllManual = async () => {
+    if (deleteConfirmText !== 'حذف الكل') return;
+    setDeletingAll(true);
+    try {
+      const response = await fetch('/api/attendees/delete-all-manual', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${getToken()}` },
+      });
+      if (response.status === 401) {
+        router.replace('/admin');
+        return;
+      }
+      const data = await response.json();
+      if (data.success) {
+        setShowDeleteAllDialog(false);
+        setDeleteConfirmText('');
+        fetchAttendees();
+      } else {
+        alert(data.error || 'حدث خطأ أثناء الحذف');
+      }
+    } catch (e) {
+      console.error('Delete all manual error:', e);
+      alert('حدث خطأ في الاتصال');
+    } finally {
+      setDeletingAll(false);
+    }
+  };
+
 
   const downloadAcceptedExcel = async () => {
     setExportingExcel(true);
@@ -237,7 +269,67 @@ export default function ManualInvitationsPage() {
           <span style={{ color: '#1a5c2a' }}>تم التسليم: {deliveredCount}</span>
           <span style={{ color: 'var(--color-gold)' }}>حضر فعلياً: {attendedCount}</span>
         </div>
+
+        {total > 0 && (
+          <button
+            onClick={() => setShowDeleteAllDialog(true)}
+            className="mt-4 px-4 py-2 rounded-lg text-sm font-medium"
+            style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.35)', color: '#dc2626' }}
+          >
+            🗑️ حذف كل الدعوات اليدوية ({total})
+          </button>
+        )}
       </div>
+
+      {showDeleteAllDialog && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-4"
+          style={{ background: 'rgba(0,0,0,0.5)' }}
+        >
+          <div className="rounded-2xl p-6 max-w-md w-full" style={{ background: '#fff' }}>
+            <h2 className="text-lg font-bold mb-2" style={{ color: '#dc2626' }}>
+              ⚠️ تأكيد حذف نهائي
+            </h2>
+            <p className="text-sm mb-4" style={{ color: '#444' }}>
+              سيتم حذف <strong>{total}</strong> شخصاً من الدعوات اليدوية نهائياً وبلا رجعة. التسجيل العام
+              للموقع (غير اليدوي) لن يُمس إطلاقاً.
+              <br /><br />
+              للتأكيد، اكتب <strong dir="rtl">حذف الكل</strong> في الحقل أدناه:
+            </p>
+            <input
+              type="text"
+              value={deleteConfirmText}
+              onChange={(e) => setDeleteConfirmText(e.target.value)}
+              placeholder="حذف الكل"
+              className="input-islamic w-full px-4 py-3 rounded-xl text-base mb-4"
+              dir="rtl"
+              disabled={deletingAll}
+            />
+            <div className="flex gap-3">
+              <button
+                onClick={handleDeleteAllManual}
+                disabled={deleteConfirmText !== 'حذف الكل' || deletingAll}
+                className="flex-1 py-3 rounded-xl text-sm font-bold"
+                style={{
+                  background: deleteConfirmText === 'حذف الكل' ? '#dc2626' : 'rgba(220,38,38,0.3)',
+                  color: '#fff',
+                  cursor: deleteConfirmText === 'حذف الكل' ? 'pointer' : 'not-allowed',
+                }}
+              >
+                {deletingAll ? 'جاري الحذف...' : 'حذف نهائياً'}
+              </button>
+              <button
+                onClick={() => { setShowDeleteAllDialog(false); setDeleteConfirmText(''); }}
+                disabled={deletingAll}
+                className="flex-1 py-3 rounded-xl text-sm font-bold"
+                style={{ background: 'rgba(0,0,0,0.05)', color: '#555' }}
+              >
+                إلغاء
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="glass rounded-2xl p-4 mb-4 space-y-3" style={{ border: '1px solid rgba(201, 168, 76, 0.15)' }}>
         <input

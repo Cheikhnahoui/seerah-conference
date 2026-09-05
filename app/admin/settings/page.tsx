@@ -18,7 +18,7 @@ interface Config {
 const EMPTY_CONFIG: Config = {
   conf_name: '',
   conf_date_hijri: '21 – 23 ربيع الأول 1448هـ',
-  conf_date_gregorian: '4 – 6 سبتمبر 2026م',
+  conf_date_gregorian: '15-16 سبتمبر',
   conf_location: '',
   conf_description: '',
   welcome_text: '',
@@ -138,32 +138,22 @@ export default function SettingsPage() {
           {/* FREE-TEXT DATE FIELDS          */}
           {/* ============================= */}
 
-          <FormField label="تاريخ المؤتمر (هجري)">
-            <input
-              type="text"
-              value={config.conf_date_hijri}
-              onChange={(e) => setConfig({ ...config, conf_date_hijri: e.target.value })}
-              className="input-islamic w-full px-4 py-3 rounded-xl"
-              placeholder="21 – 23 ربيع الأول 1448هـ"
-            />
-          </FormField>
-
           <FormField label="تاريخ المؤتمر (ميلادي)">
             <input
               type="text"
               value={config.conf_date_gregorian}
               onChange={(e) => setConfig({ ...config, conf_date_gregorian: e.target.value })}
               className="input-islamic w-full px-4 py-3 rounded-xl"
-              placeholder="4 – 6 سبتمبر 2026م"
+              placeholder="15-16 سبتمبر"
             />
           </FormField>
 
           {/* Live preview so the admin can verify before saving */}
           <div className="rounded-xl p-3 text-sm space-y-1" style={{ background: 'rgba(45,110,45,0.06)', border: '1px dashed var(--color-green)' }}>
-            <p dir="rtl">🇦🇪 {config.conf_date_hijri} الموافق {config.conf_date_gregorian}</p>
-            <p dir="ltr">🇫🇷 {translateDateText(config.conf_date_hijri)} ({translateDateText(config.conf_date_gregorian)})</p>
+            <p dir="rtl">🇦🇪 {config.conf_date_gregorian}</p>
+            <p dir="ltr">🇫🇷 {translateDateText(config.conf_date_gregorian)}</p>
             <p className="text-xs" style={{ color: '#777' }} dir="rtl">
-              معاينة تلقائية. إذا لم يُترجم اسم الشهر بشكل صحيح، تأكد من كتابته كما هو معتاد (مثال: ربيع الأول، سبتمبر).
+              معاينة تلقائية. إذا لم يُترجم اسم الشهر بشكل صحيح، تأكد من كتابته كما هو معتاد (مثال: سبتمبر).
             </p>
           </div>
 

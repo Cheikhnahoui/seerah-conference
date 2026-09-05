@@ -47,9 +47,9 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   const [downloading, setDownloading] = useState(false);
 
   const [confDateHijri, setConfDateHijri] = useState('21 – 23 ربيع الأول 1448هـ');
-  const [confDateGregorian, setConfDateGregorian] = useState('4 – 6 سبتمبر 2026م');
+  const [confDateGregorian, setConfDateGregorian] = useState('15-16 سبتمبر');
   const [confLocationAr, setConfLocationAr] = useState(
-    'المركز الدولي للمؤتمرات (المختار ولد داداه)'
+    'فندق موريسانتر'
   );
   const [confName, setConfName] = useState('المؤتمر الدولي للسيرة النبوية');
 
@@ -79,8 +79,8 @@ export function InvitationCard({ attendee }: InvitationCardProps) {
   // same source text, so they can never disagree.
   const displayDate =
     lang === 'fr'
-      ? `${translateDateText(confDateHijri)} (${translateDateText(confDateGregorian)})`
-      : `${confDateHijri} الموافق ${confDateGregorian}`;
+      ? translateDateText(confDateGregorian)
+      : confDateGregorian;
   const displayLocation =
     lang === 'fr' ? translateLocation(confLocationAr) : confLocationAr;
 

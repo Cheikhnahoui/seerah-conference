@@ -44,9 +44,6 @@ export async function PUT(
     const { id } = await params;
     const body = await request.json();
 
-    // The admin PhoneInput always sends E.164, but validate here too
-    // so a malformed/invalid number can never be saved regardless of
-    // where the request came from.
     if (body.phone_number && !validatePhone(body.phone_number)) {
       return NextResponse.json({ success: false, error: 'رقم هاتف غير صالح' }, { status: 400 });
     }
@@ -77,6 +74,8 @@ export async function PUT(
     if (body.occupation !== undefined) updateData.occupation = body.occupation;
     if (body.approval_status !== undefined) updateData.approval_status = body.approval_status;
     if (body.delivery_status !== undefined) updateData.delivery_status = body.delivery_status;
+    if (body.invitation_sent !== undefined) updateData.invitation_sent = body.invitation_sent;
+    if (body.invitation_sent_at !== undefined) updateData.invitation_sent_at = body.invitation_sent_at;
 
     const { data, error } = await supabase
       .from('attendees')

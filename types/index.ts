@@ -11,6 +11,8 @@ export interface Attendee {
   approval_status: 'pending' | 'approved' | 'rejected';
   is_manual: boolean;
   delivery_status: 'not_delivered' | 'delivered';
+  invitation_sent: boolean;
+  invitation_sent_at: string | null;
   registration_date: string;
   attendance_date: string | null;
   created_at: string;

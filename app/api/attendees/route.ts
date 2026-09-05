@@ -117,7 +117,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('attendees')
-      .select('id, registration_number, qr_token, full_name, phone_number, city, occupation, attendance_status, approval_status, is_manual, delivery_status, registration_date, attendance_date, created_at', { count: 'exact' })
+      .select('id, registration_number, qr_token, full_name, phone_number, city, occupation, attendance_status, approval_status, is_manual, delivery_status, invitation_sent, invitation_sent_at, registration_date, attendance_date, created_at', { count: 'exact' })
       .order('created_at', { ascending: false })
       .range(offset, offset + limit - 1);
 

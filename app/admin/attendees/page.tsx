@@ -142,6 +142,39 @@ export default function AttendeesPage() {
     if ((await response.json()).success) fetchFirstPage();
   };
 
+  /**
+   * Clicking the phone number opens WhatsApp with a pre-filled
+   * message (the browser handles that via the normal <a href> click
+   * — we don't preventDefault(); the update just fires alongside it).
+   * A single click now covers both "approve" and "mark as sent", so
+   * the admin never needs a separate approve step first.
+   */
+  const handlePhoneClick = async (e: React.MouseEvent, a: Attendee) => {
+    try {
+      const now = new Date().toISOString();
+      const response = await fetch(`/api/attendees/${a.id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${getToken()}` },
+        body: JSON.stringify({
+          approval_status: 'approved',
+          invitation_sent: true,
+          invitation_sent_at: now,
+        }),
+      });
+      if ((await response.json()).success) {
+        setAttendees((prev) =>
+          prev.map((x) =>
+            x.id === a.id
+              ? { ...x, approval_status: 'approved', invitation_sent: true, invitation_sent_at: now }
+              : x
+          )
+        );
+      }
+    } catch (err) {
+      console.error('Mark sent error:', err);
+    }
+  };
+
   const handleBulkDelete = async () => {
     if (selectedIds.size === 0) return;
     if (!confirm(`هل أنت متأكد من حذف ${selectedIds.size} مشارك؟ لا يمكن التراجع عن هذا الإجراء.`)) return;
@@ -398,15 +431,23 @@ export default function AttendeesPage() {
                             {isPlaceholderPhone(a.phone_number) ? (
                               <span style={{ color: '#999' }}>بدون رقم</span>
                             ) : (
-                              <a
-                                href={buildWhatsAppLink(a)}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ color: '#1a5c2a', textDecoration: 'underline', textUnderlineOffset: '2px' }}
-                                title="فتح واتساب مع رسالة جاهزة تحتوي رابط بطاقته"
-                              >
-                                {formatForDisplay(a.phone_number)}
-                              </a>
+                              <div>
+                                <a
+                                  href={buildWhatsAppLink(a)}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => handlePhoneClick(e, a)}
+                                  style={{ color: a.invitation_sent ? '#1a5c2a' : '#1a5c2a', textDecoration: 'underline', textUnderlineOffset: '2px' }}
+                                  title="فتح واتساب مع رسالة جاهزة تحتوي رابط بطاقته — سيُقبل تلقائياً"
+                                >
+                                  {formatForDisplay(a.phone_number)}
+                                </a>
+                                {a.invitation_sent && (
+                                  <p className="text-xs mt-0.5" style={{ color: '#1a5c2a' }}>
+                                    ✅ أُرسلت {a.invitation_sent_at ? formatDate(a.invitation_sent_at) : ''}
+                                  </p>
+                                )}
+                              </div>
                             )}
                           </td>
                           <td>{a.city || '—'}</td>

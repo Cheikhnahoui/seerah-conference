@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { UpdateType, ParticipationStatus, UPDATE_TYPE_LABELS, PARTICIPATION_STATUS_LABELS } from '@/types';
+import { ImageUploader } from '@/components/ImageUploader';
+import { MultiImageUploader } from '@/components/MultiImageUploader';
 
 const TYPE_OPTIONS: UpdateType[] = ['news', 'announcement', 'notice', 'scholar', 'event'];
 
@@ -19,7 +21,7 @@ export default function EditUpdatePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [additionalImagesText, setAdditionalImagesText] = useState('');
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [country, setCountry] = useState('');
   const [role, setRole] = useState('');
   const [participationStatus, setParticipationStatus] = useState<ParticipationStatus>('confirmed');
@@ -49,7 +51,7 @@ export default function EditUpdatePage() {
         setTitle(post.title || '');
         setContent(post.content || '');
         setImageUrl(post.image_url || '');
-        setAdditionalImagesText((post.additional_images || []).join('\n'));
+        setAdditionalImages(post.additional_images || []);
         setCountry(post.country || '');
         setRole(post.role || '');
         setParticipationStatus(post.participation_status || 'confirmed');
@@ -76,11 +78,6 @@ export default function EditUpdatePage() {
     setSubmitting(true);
     const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
 
-    const additional_images = additionalImagesText
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     try {
       const res = await fetch(`/api/updates/${id}`, {
         method: 'PUT',
@@ -92,8 +89,8 @@ export default function EditUpdatePage() {
           type,
           title: title.trim(),
           content: content.trim() || null,
-          image_url: imageUrl.trim() || null,
-          additional_images: additional_images.length > 0 ? additional_images : null,
+          image_url: imageUrl || null,
+          additional_images: additionalImages.length > 0 ? additionalImages : null,
           country: isScholar ? country.trim() || null : null,
           role: isScholar ? role.trim() || null : null,
           participation_status: isScholar ? participationStatus : null,
@@ -247,35 +244,20 @@ export default function EditUpdatePage() {
           />
         </div>
 
-        {/* الصورة الرئيسية */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text)' }}>
-            رابط الصورة {isScholar ? '(صورة العالم/الشيخ)' : 'الرئيسية'}
-          </label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
-            style={inputStyle}
-            placeholder="https://..."
-          />
-        </div>
+        {/* الصورة الرئيسية — رفع مباشر */}
+        <ImageUploader
+          value={imageUrl}
+          onChange={setImageUrl}
+          label={isScholar ? 'صورة العالم/الشيخ' : 'الصورة الرئيسية'}
+        />
 
-        {/* صور إضافية */}
+        {/* صور إضافية — رفع مباشر */}
         {!isScholar && (
-          <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text)' }}>
-              صور إضافية (اختياري — رابط واحد في كل سطر)
-            </label>
-            <textarea
-              value={additionalImagesText}
-              onChange={(e) => setAdditionalImagesText(e.target.value)}
-              rows={3}
-              className="w-full px-4 py-2.5 rounded-lg text-sm outline-none resize-y"
-              style={inputStyle}
-            />
-          </div>
+          <MultiImageUploader
+            value={additionalImages}
+            onChange={setAdditionalImages}
+            label="صور إضافية (اختياري)"
+          />
         )}
 
         {/* خيارات النشر */}

@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { UpdateType, ParticipationStatus, UPDATE_TYPE_LABELS, PARTICIPATION_STATUS_LABELS } from '@/types';
+import { ImageUploader } from '@/components/ImageUploader';
+import { MultiImageUploader } from '@/components/MultiImageUploader';
 
 const TYPE_OPTIONS: UpdateType[] = ['news', 'announcement', 'notice', 'scholar', 'event'];
 
@@ -14,7 +16,7 @@ export default function CreateUpdatePage() {
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
   const [imageUrl, setImageUrl] = useState('');
-  const [additionalImagesText, setAdditionalImagesText] = useState('');
+  const [additionalImages, setAdditionalImages] = useState<string[]>([]);
   const [country, setCountry] = useState('');
   const [role, setRole] = useState('');
   const [participationStatus, setParticipationStatus] = useState<ParticipationStatus>('confirmed');
@@ -39,11 +41,6 @@ export default function CreateUpdatePage() {
     setSubmitting(true);
     const token = typeof window !== 'undefined' ? localStorage.getItem('admin_token') : null;
 
-    const additional_images = additionalImagesText
-      .split('\n')
-      .map((s) => s.trim())
-      .filter(Boolean);
-
     try {
       const res = await fetch('/api/updates', {
         method: 'POST',
@@ -55,8 +52,8 @@ export default function CreateUpdatePage() {
           type,
           title: title.trim(),
           content: content.trim() || undefined,
-          image_url: imageUrl.trim() || undefined,
-          additional_images: additional_images.length > 0 ? additional_images : undefined,
+          image_url: imageUrl || undefined,
+          additional_images: additionalImages.length > 0 ? additionalImages : undefined,
           country: isScholar ? country.trim() || undefined : undefined,
           role: isScholar ? role.trim() || undefined : undefined,
           participation_status: isScholar ? participationStatus : undefined,
@@ -197,36 +194,20 @@ export default function CreateUpdatePage() {
           />
         </div>
 
-        {/* الصورة الرئيسية */}
-        <div>
-          <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text)' }}>
-            رابط الصورة {isScholar ? '(صورة العالم/الشيخ)' : 'الرئيسية'}
-          </label>
-          <input
-            type="url"
-            value={imageUrl}
-            onChange={(e) => setImageUrl(e.target.value)}
-            className="w-full px-4 py-2.5 rounded-lg text-sm outline-none"
-            style={inputStyle}
-            placeholder="https://..."
-          />
-        </div>
+        {/* الصورة الرئيسية — رفع مباشر */}
+        <ImageUploader
+          value={imageUrl}
+          onChange={setImageUrl}
+          label={isScholar ? 'صورة العالم/الشيخ' : 'الصورة الرئيسية'}
+        />
 
-        {/* صور إضافية — فقط للأخبار/الفعاليات */}
+        {/* صور إضافية — فقط للأخبار/الفعاليات، رفع مباشر */}
         {!isScholar && (
-          <div>
-            <label className="block text-sm font-medium mb-1.5" style={{ color: 'var(--color-text)' }}>
-              صور إضافية (اختياري — رابط واحد في كل سطر)
-            </label>
-            <textarea
-              value={additionalImagesText}
-              onChange={(e) => setAdditionalImagesText(e.target.value)}
-              rows={3}
-              className="w-full px-4 py-2.5 rounded-lg text-sm outline-none resize-y"
-              style={inputStyle}
-              placeholder={'https://...\nhttps://...'}
-            />
-          </div>
+          <MultiImageUploader
+            value={additionalImages}
+            onChange={setAdditionalImages}
+            label="صور إضافية (اختياري)"
+          />
         )}
 
         {/* خيارات النشر */}

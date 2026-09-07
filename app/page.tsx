@@ -5,6 +5,10 @@ import { RegistrationForm } from '@/components/RegistrationForm';
 import { LangProvider, LangToggle, useLang } from '@/lib/i18n';
 import { translateDateText } from '@/lib/dateFormat';
 import { translateLocation } from '@/lib/venueTranslations';
+import { ImportantNoticeBanner } from '@/components/ImportantNoticeBanner';
+import { UpdateCard } from '@/components/UpdateCard';
+import { UpdatePost } from '@/types';
+import Link from 'next/link';
 
 let configCache: Record<string, any> | null = null;
 let configPromise: Promise<void> | null = null;
@@ -39,6 +43,65 @@ const DEFAULT_CONFIG: HomeConfig = {
   conf_date_hijri: '21 – 23 ربيع الأول 1448هـ',
   conf_date_gregorian: '4 – 6 سبتمبر 2026م',
 };
+
+function LatestUpdatesSection() {
+  const [posts, setPosts] = useState<UpdatePost[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/updates?limit=4')
+      .then((res) => res.json())
+      .then((result) => {
+        if (!cancelled && result.success) setPosts(result.data);
+      })
+      .catch(() => { if (!cancelled) setPosts([]); });
+    return () => { cancelled = true; };
+  }, []);
+
+  // لا نعرض القسم إطلاقاً إذا لم تكن هناك أي منشورات بعد
+  if (posts !== null && posts.length === 0) return null;
+
+  return (
+    <section className="container mx-auto px-4 py-10 max-w-5xl">
+      <div className="flex items-center justify-between mb-6 flex-wrap gap-3">
+        <div>
+          <h2
+            className="text-2xl font-bold mb-1"
+            style={{ color: 'var(--color-green-dark)', fontFamily: 'Cairo, sans-serif' }}
+          >
+            آخر المستجدات
+          </h2>
+          <div className="h-0.5 w-16 rounded" style={{ background: 'rgba(212,160,23,0.7)' }} />
+        </div>
+        <Link
+          href="/updates"
+          className="text-sm font-semibold px-4 py-2 rounded-full transition-opacity hover:opacity-85"
+          style={{ background: 'var(--color-green)', color: '#fff' }}
+        >
+          عرض جميع المستجدات ←
+        </Link>
+      </div>
+
+      {posts === null ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => (
+            <div
+              key={i}
+              className="rounded-2xl animate-pulse"
+              style={{ background: 'var(--color-border)', aspectRatio: '3 / 4' }}
+            />
+          ))}
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {posts.map((post) => (
+            <UpdateCard key={post.id} post={post} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
 
 function HomeContent() {
   const { t, lang } = useLang();
@@ -75,6 +138,9 @@ function HomeContent() {
         style={{ background: 'var(--color-green)', color: '#fff' }}>
         {t('bismillah')}
       </div>
+
+      {/* شريط الإشعار المهم — لا يظهر إلا عند وجود إشعار important فعّال */}
+      <ImportantNoticeBanner />
 
       {/* Header */}
       <header className="relative overflow-hidden"
@@ -142,6 +208,9 @@ function HomeContent() {
       </header>
 
       <div className="h-1.5" style={{ background: 'linear-gradient(90deg, var(--color-green), var(--color-gold), var(--color-green))' }} />
+
+      {/* آخر المستجدات */}
+      <LatestUpdatesSection />
 
       <div className="container mx-auto px-4 py-10 max-w-2xl">
         <RegistrationForm />

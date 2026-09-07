@@ -59,3 +59,60 @@ export interface QrScanResult {
   alreadyAttended?: boolean;
   message: string;
 }
+
+// ============================================================
+// قسم "آخر المستجدات" — أخبار، إعلانات، إشعارات، علماء، فعاليات
+// جدول مستقل تماماً عن attendees/conference_config
+// ============================================================
+
+export type UpdateType = 'news' | 'announcement' | 'notice' | 'scholar' | 'event';
+
+export type ParticipationStatus = 'confirmed' | 'expected';
+
+export interface UpdatePost {
+  id: string;
+  type: UpdateType;
+  title: string;
+  content: string | null;
+  image_url: string | null;
+  additional_images: string[] | null;
+  // الحقول التالية ذات معنى فقط عندما type === 'scholar'
+  country: string | null;
+  role: string | null;
+  participation_status: ParticipationStatus | null;
+  is_published: boolean;
+  is_pinned: boolean;
+  is_important_notice: boolean;
+  publish_date: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UpdatePostFormData {
+  type: UpdateType;
+  title: string;
+  content?: string;
+  image_url?: string;
+  additional_images?: string[];
+  country?: string;
+  role?: string;
+  participation_status?: ParticipationStatus;
+  is_published?: boolean;
+  is_pinned?: boolean;
+  is_important_notice?: boolean;
+  publish_date?: string;
+}
+
+// تسميات عرض عربية للأنواع، تُستخدَم في لوحة الإدارة والصفحات العامة
+export const UPDATE_TYPE_LABELS: Record<UpdateType, string> = {
+  news: 'خبر',
+  announcement: 'إعلان',
+  notice: 'إشعار مهم',
+  scholar: 'عالم/شيخ مشارك',
+  event: 'فعالية',
+};
+
+export const PARTICIPATION_STATUS_LABELS: Record<ParticipationStatus, string> = {
+  confirmed: 'مؤكد الحضور',
+  expected: 'سيشارك في المؤتمر',
+};

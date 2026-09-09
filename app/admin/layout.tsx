@@ -64,13 +64,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 shadow-lg"
         style={{ background: '#fff', borderTop: '1px solid var(--color-border)' }}>
-        <div className="flex overflow-x-auto">
+        <div className="flex overflow-x-auto gap-1 px-1">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link key={item.href} href={item.href}
-                className="flex-1 flex flex-col items-center py-3 gap-1 text-xs font-medium transition-colors"
-                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '64px' }}>
+                className="flex-1 flex flex-col items-center py-3 px-2 gap-1.5 text-[11px] leading-tight font-medium transition-colors rounded-lg my-1"
+                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '72px' }}>
                 <span className="text-xl">{item.icon}</span>
                 <span className="whitespace-nowrap">{item.label}</span>
               </Link>

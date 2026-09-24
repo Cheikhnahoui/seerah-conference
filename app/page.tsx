@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { RegistrationForm } from '@/components/RegistrationForm';
 import { LangProvider, LangToggle, useLang } from '@/lib/i18n';
 import { translateDateText } from '@/lib/dateFormat';
 import { translateLocation } from '@/lib/venueTranslations';
@@ -34,8 +33,6 @@ interface HomeConfig {
   conf_date_gregorian: string;
 }
 
-// لا قيم افتراضية إطلاقاً — كل حقل فارغ حتى تصل بيانات قاعدة البيانات
-// الفعلية، فلا يظهر أي نص قديم "عالق" من كود قديم.
 const EMPTY_CONFIG: HomeConfig = {
   conf_name: '',
   conf_location: '',
@@ -219,15 +216,9 @@ function HomeContent() {
       {/* آخر المستجدات */}
       <LatestUpdatesSection />
 
-      <div className="container mx-auto px-4 py-10 max-w-2xl">
-        <RegistrationForm />
-      </div>
-
       <footer className="text-center py-8 mt-4" style={{ borderTop: '1px solid var(--color-border)' }}>
         <div className="flex justify-center gap-6 text-sm mb-3" style={{ color: 'var(--color-text-muted)' }}>
           <a href="/retrieve" className="hover:text-green-700 transition-colors">{t('footer_retrieve')}</a>
-          <span>|</span>
-          <a href="/attendance" className="hover:text-green-700 transition-colors">{t('footer_reception')}</a>
           <span>|</span>
           <a href="/admin" className="hover:text-green-700 transition-colors">{t('footer_admin')}</a>
         </div>

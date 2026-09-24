@@ -29,6 +29,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { href: '/admin/create-invitation', label: 'إنشاء دعوة', icon: '➕' },
     { href: '/admin/updates', label: 'إدارة المستجدات', icon: '📰' },
     { href: '/admin/distributors', label: 'الموزعون', icon: '🧑‍💼' },
+    { href: '/distributor', label: 'دخول الموزعين', icon: '🔑' },
     { href: '/admin/settings', label: 'الإعدادات', icon: '⚙️' },
   ];
 

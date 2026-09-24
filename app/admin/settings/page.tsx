@@ -17,8 +17,8 @@ interface Config {
 
 const EMPTY_CONFIG: Config = {
   conf_name: '',
-  conf_date_hijri: '21 – 23 ربيع الأول 1448هـ',
-  conf_date_gregorian: '15-16 سبتمبر',
+  conf_date_hijri: '',
+  conf_date_gregorian: '',
   conf_location: '',
   conf_description: '',
   welcome_text: '',
@@ -35,9 +35,6 @@ export default function SettingsPage() {
 
   const getToken = () => localStorage.getItem('admin_token') || '';
 
-  // Guard: if there is no admin token at all, bounce back to the login
-  // page immediately instead of showing the settings form to anyone
-  // who simply visits the URL.
   useEffect(() => {
     const token = getToken();
     if (!token) {
@@ -62,10 +59,6 @@ export default function SettingsPage() {
     setSaving(true);
     setMessage('');
     try {
-      // French date/location are derived automatically from the Arabic
-      // text and saved alongside it, so the rest of the app (including
-      // the invitation card) can read a ready-made string without
-      // re-implementing the translation logic.
       const payload = {
         ...config,
         conf_date: `${config.conf_date_hijri} الموافق ${config.conf_date_gregorian}`,
@@ -134,32 +127,22 @@ export default function SettingsPage() {
             />
           </FormField>
 
-          {/* ============================= */}
-          {/* FREE-TEXT DATE FIELDS          */}
-          {/* ============================= */}
-
           <FormField label="تاريخ المؤتمر (ميلادي)">
             <input
               type="text"
               value={config.conf_date_gregorian}
               onChange={(e) => setConfig({ ...config, conf_date_gregorian: e.target.value })}
               className="input-islamic w-full px-4 py-3 rounded-xl"
-              placeholder="15-16 سبتمبر"
             />
           </FormField>
 
-          {/* Live preview so the admin can verify before saving */}
           <div className="rounded-xl p-3 text-sm space-y-1" style={{ background: 'rgba(45,110,45,0.06)', border: '1px dashed var(--color-green)' }}>
-            <p dir="rtl">🇦🇪 {config.conf_date_gregorian}</p>
-            <p dir="ltr">🇫🇷 {translateDateText(config.conf_date_gregorian)}</p>
+            <p dir="rtl">🇦🇪 {config.conf_date_gregorian || '—'}</p>
+            <p dir="ltr">🇫🇷 {config.conf_date_gregorian ? translateDateText(config.conf_date_gregorian) : '—'}</p>
             <p className="text-xs" style={{ color: '#777' }} dir="rtl">
               معاينة تلقائية. إذا لم يُترجم اسم الشهر بشكل صحيح، تأكد من كتابته كما هو معتاد (مثال: سبتمبر).
             </p>
           </div>
-
-          {/* ============================= */}
-          {/* LOCATION (Arabic only input)   */}
-          {/* ============================= */}
 
           <FormField label="مكان المؤتمر (بالعربية فقط)">
             <input
@@ -167,7 +150,6 @@ export default function SettingsPage() {
               value={config.conf_location}
               onChange={(e) => setConfig({ ...config, conf_location: e.target.value })}
               className="input-islamic w-full px-4 py-3 rounded-xl"
-              placeholder="المركز الدولي للمؤتمرات (المختار ولد داداه)"
             />
           </FormField>
 
@@ -204,7 +186,6 @@ export default function SettingsPage() {
               className="input-islamic w-full px-4 py-3 rounded-xl"
               dir="ltr"
               style={{ textAlign: 'right' }}
-              placeholder="https://..."
             />
           </FormField>
         </div>

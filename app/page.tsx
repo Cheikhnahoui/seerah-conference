@@ -34,14 +34,16 @@ interface HomeConfig {
   conf_date_gregorian: string;
 }
 
-const DEFAULT_CONFIG: HomeConfig = {
-  conf_name: 'المؤتمر الدولي للسيرة النبوية',
-  conf_location: 'المركز الدولي للمؤتمرات (المختار ولد داداه)',
-  conf_description: 'يسعدنا دعوتكم للمشاركة في المؤتمر الدولي للسيرة النبوية',
-  conf_name_fr: 'Conférence Internationale sur la Sîra du Prophète ﷺ',
-  conf_description_fr: 'Nous sommes heureux de vous inviter à participer à la Conférence Internationale sur la Sîra du Prophète ﷺ',
-  conf_date_hijri: '21 – 23 ربيع الأول 1448هـ',
-  conf_date_gregorian: '4 – 6 سبتمبر 2026م',
+// لا قيم افتراضية إطلاقاً — كل حقل فارغ حتى تصل بيانات قاعدة البيانات
+// الفعلية، فلا يظهر أي نص قديم "عالق" من كود قديم.
+const EMPTY_CONFIG: HomeConfig = {
+  conf_name: '',
+  conf_location: '',
+  conf_description: '',
+  conf_name_fr: '',
+  conf_description_fr: '',
+  conf_date_hijri: '',
+  conf_date_gregorian: '',
 };
 
 function LatestUpdatesSection() {
@@ -58,7 +60,6 @@ function LatestUpdatesSection() {
     return () => { cancelled = true; };
   }, []);
 
-  // لا نعرض القسم إطلاقاً إذا لم تكن هناك أي منشورات بعد
   if (posts !== null && posts.length === 0) return null;
 
   return (
@@ -105,29 +106,31 @@ function LatestUpdatesSection() {
 
 function HomeContent() {
   const { t, lang } = useLang();
-  const [config, setConfig] = useState<HomeConfig>(DEFAULT_CONFIG);
+  const [config, setConfig] = useState<HomeConfig>(EMPTY_CONFIG);
 
   useEffect(() => {
     loadConfig().then(() => {
       if (configCache) {
-        setConfig(prev => ({
-          ...prev,
-          conf_name: configCache?.conf_name || prev.conf_name,
-          conf_location: configCache?.conf_location || prev.conf_location,
-          conf_description: configCache?.conf_description || prev.conf_description,
-          conf_name_fr: configCache?.conf_name_fr || prev.conf_name_fr,
-          conf_description_fr: configCache?.conf_description_fr || prev.conf_description_fr,
-          conf_date_hijri: configCache?.conf_date_hijri || prev.conf_date_hijri,
-          conf_date_gregorian: configCache?.conf_date_gregorian || prev.conf_date_gregorian,
-        }));
+        setConfig({
+          conf_name: configCache.conf_name || '',
+          conf_location: configCache.conf_location || '',
+          conf_description: configCache.conf_description || '',
+          conf_name_fr: configCache.conf_name_fr || '',
+          conf_description_fr: configCache.conf_description_fr || '',
+          conf_date_hijri: configCache.conf_date_hijri || '',
+          conf_date_gregorian: configCache.conf_date_gregorian || '',
+        });
       }
     });
   }, []);
 
-  const displayDate =
-    lang === 'fr'
+  const hasDate = !!(config.conf_date_hijri || config.conf_date_gregorian);
+  const displayDate = !hasDate
+    ? ''
+    : lang === 'fr'
       ? `${translateDateText(config.conf_date_hijri)} (${translateDateText(config.conf_date_gregorian)})`
-      : `${config.conf_date_hijri} الموافق ${config.conf_date_gregorian}`;
+      : [config.conf_date_hijri, config.conf_date_gregorian].filter(Boolean).join(' الموافق ');
+
   const displayLocation =
     lang === 'fr' ? translateLocation(config.conf_location) : config.conf_location;
 
@@ -139,7 +142,7 @@ function HomeContent() {
         {t('bismillah')}
       </div>
 
-      {/* شريط الإشعار المهم — لا يظهر إلا عند وجود إشعار important فعّال */}
+      {/* شريط الإشعار المهم */}
       <ImportantNoticeBanner />
 
       {/* Header */}
@@ -195,14 +198,18 @@ function HomeContent() {
           </p>
 
           <div className="flex flex-col sm:flex-row justify-center gap-3">
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-              style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span>📅</span><span>{displayDate}</span>
-            </div>
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-              style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
-              <span>📍</span><span>{displayLocation}</span>
-            </div>
+            {hasDate && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+                style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <span>📅</span><span>{displayDate}</span>
+              </div>
+            )}
+            {config.conf_location && (
+              <div className="flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
+                style={{ background: 'rgba(255,255,255,0.15)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)' }}>
+                <span>📍</span><span>{displayLocation}</span>
+              </div>
+            )}
           </div>
         </div>
       </header>

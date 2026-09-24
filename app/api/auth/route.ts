@@ -3,7 +3,9 @@ import { createAdminToken } from '@/lib/utils';
 import { Ratelimit } from '@upstash/ratelimit';
 import { Redis } from '@upstash/redis';
 
-// Brute force protection: max 3 attempts per IP+email per 10 minutes
+// Brute force protection: max 3 WRONG attempts per IP+email per 10 minutes.
+// Correct credentials always succeed immediately and never touch this
+// counter, even if the key is currently blocked from prior wrong attempts.
 const authRatelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.fixedWindow(3, '10m'),
@@ -18,7 +20,6 @@ export async function POST(request: NextRequest) {
       request.headers.get('x-real-ip') ||
       'unknown';
 
-    // Read body first to get email
     const body = await request.json();
     const { email, password } = body;
 
@@ -29,7 +30,22 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Rate limit key = IP + email → each user blocked independently
+    const adminEmail = process.env.ADMIN_EMAIL;
+    const adminPassword = process.env.ADMIN_PASSWORD;
+
+    // تحقّق من صحة البيانات أولاً — إن كانت صحيحة، ندخل فوراً بلا أي
+    // علاقة بحد المحاولات، ولو كان هذا المفتاح محظوراً مؤقتاً بسبب
+    // محاولات خاطئة سابقة.
+    if (email === adminEmail && password === adminPassword) {
+      const token = createAdminToken(email);
+      return NextResponse.json({
+        success: true,
+        token,
+        message: 'تم تسجيل الدخول بنجاح',
+      });
+    }
+
+    // البيانات خاطئة — الآن فقط نستهلك/نفحص حد المحاولات.
     const rateLimitKey = `${ip}:${email}`;
     const { success, remaining, reset } = await authRatelimit.limit(rateLimitKey);
 
@@ -50,26 +66,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const adminEmail = process.env.ADMIN_EMAIL;
-    const adminPassword = process.env.ADMIN_PASSWORD;
-
-    if (email !== adminEmail || password !== adminPassword) {
-      return NextResponse.json(
-        {
-          success: false,
-          error: `بيانات الدخول غير صحيحة. المحاولات المتبقية: ${remaining}`,
-        },
-        { status: 401 }
-      );
-    }
-
-    const token = createAdminToken(email);
-
-    return NextResponse.json({
-      success: true,
-      token,
-      message: 'تم تسجيل الدخول بنجاح',
-    });
+    return NextResponse.json(
+      {
+        success: false,
+        error: `بيانات الدخول غير صحيحة. المحاولات المتبقية: ${remaining}`,
+      },
+      { status: 401 }
+    );
   } catch {
     return NextResponse.json({ success: false, error: 'خطأ داخلي' }, { status: 500 });
   }

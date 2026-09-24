@@ -26,13 +26,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   const navItems = [
     { href: '/admin/dashboard', label: 'الإحصائيات', icon: '📊' },
-    { href: '/admin/attendees', label: 'المشاركون', icon: '👥' },
     { href: '/admin/create-invitation', label: 'إنشاء دعوة', icon: '➕' },
-    { href: '/admin/bulk-invitations', label: 'رفع جماعي', icon: '📤' },
-    { href: '/admin/manual-invitations', label: 'سجل الدعوات', icon: '🎫' },
     { href: '/admin/updates', label: 'إدارة المستجدات', icon: '📰' },
+    { href: '/admin/distributors', label: 'الموزعون', icon: '🧑‍💼' },
     { href: '/admin/settings', label: 'الإعدادات', icon: '⚙️' },
-    { href: '/attendance', label: 'مسح QR', icon: '📷' },
   ];
 
   return (
@@ -69,8 +66,8 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             const active = pathname === item.href;
             return (
               <Link key={item.href} href={item.href}
-                className="flex-1 flex flex-col items-center py-3 px-2 gap-1.5 text-[11px] leading-tight font-medium transition-colors rounded-lg my-1"
-                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '72px' }}>
+                className="flex-1 flex flex-col items-center py-3 px-2 gap-1.5 text-xs leading-tight font-medium transition-colors rounded-lg my-1"
+                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '68px' }}>
                 <span className="text-xl">{item.icon}</span>
                 <span className="whitespace-nowrap">{item.label}</span>
               </Link>

@@ -61,8 +61,11 @@ export default function SettingsPage() {
     try {
       const payload = {
         ...config,
-        conf_date: `${config.conf_date_hijri} الموافق ${config.conf_date_gregorian}`,
-        conf_date_fr: `${translateDateText(config.conf_date_hijri)} (${translateDateText(config.conf_date_gregorian)})`,
+        conf_date: [config.conf_date_hijri, config.conf_date_gregorian].filter(Boolean).join(' الموافق '),
+        conf_date_fr: [config.conf_date_hijri, config.conf_date_gregorian]
+          .filter(Boolean)
+          .map((d) => translateDateText(d))
+          .join(' / '),
         conf_location_fr: translateLocation(config.conf_location),
       };
 
@@ -127,6 +130,15 @@ export default function SettingsPage() {
             />
           </FormField>
 
+          <FormField label="تاريخ المؤتمر (هجري)">
+            <input
+              type="text"
+              value={config.conf_date_hijri}
+              onChange={(e) => setConfig({ ...config, conf_date_hijri: e.target.value })}
+              className="input-islamic w-full px-4 py-3 rounded-xl"
+            />
+          </FormField>
+
           <FormField label="تاريخ المؤتمر (ميلادي)">
             <input
               type="text"
@@ -137,8 +149,10 @@ export default function SettingsPage() {
           </FormField>
 
           <div className="rounded-xl p-3 text-sm space-y-1" style={{ background: 'rgba(45,110,45,0.06)', border: '1px dashed var(--color-green)' }}>
-            <p dir="rtl">🇦🇪 {config.conf_date_gregorian || '—'}</p>
-            <p dir="ltr">🇫🇷 {config.conf_date_gregorian ? translateDateText(config.conf_date_gregorian) : '—'}</p>
+            <p dir="rtl">🇦🇪 {[config.conf_date_hijri, config.conf_date_gregorian].filter(Boolean).join(' الموافق ') || '—'}</p>
+            <p dir="ltr">
+              🇫🇷 {[config.conf_date_hijri, config.conf_date_gregorian].filter(Boolean).map((d) => translateDateText(d)).join(' / ') || '—'}
+            </p>
             <p className="text-xs" style={{ color: '#777' }} dir="rtl">
               معاينة تلقائية. إذا لم يُترجم اسم الشهر بشكل صحيح، تأكد من كتابته كما هو معتاد (مثال: سبتمبر).
             </p>

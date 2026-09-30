@@ -47,8 +47,8 @@ export default function InvitationPage() {
         <div className="text-center">
           <p className="text-4xl mb-4">❌</p>
           <p className="text-xl font-bold mb-2" style={{ color: '#fca5a5' }}>{error}</p>
-          <Link href="/" className="text-sm hover:underline" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
-            العودة للصفحة الرئيسية
+          <Link href="/conference" className="text-sm hover:underline" style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
+            العودة لصفحة المؤتمر
           </Link>
         </div>
       </main>
@@ -68,8 +68,8 @@ export default function InvitationPage() {
         </div>
         {attendee && <InvitationCard attendee={attendee} />}
         <div className="text-center mt-8">
-          <Link href="/" className="text-sm hover:underline" style={{ color: 'rgba(201, 168, 76, 0.6)' }}>
-            تسجيل مشارك جديد
+          <Link href="/conference" className="text-sm hover:underline" style={{ color: 'rgba(201, 168, 76, 0.6)' }}>
+            العودة لصفحة المؤتمر
           </Link>
         </div>
       </div>

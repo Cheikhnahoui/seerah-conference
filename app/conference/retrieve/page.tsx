@@ -55,7 +55,7 @@ function RetrieveContent() {
 
       <div className="relative z-10 container mx-auto px-4 py-12 max-w-2xl">
         <div className="flex items-center justify-between mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-sm hover:opacity-80 transition-opacity"
+          <Link href="/conference" className="inline-flex items-center gap-2 text-sm hover:opacity-80 transition-opacity"
             style={{ color: 'rgba(201, 168, 76, 0.7)' }}>
             <span>{lang === 'ar' ? '→' : '←'}</span>
             <span>{t('back_home')}</span>

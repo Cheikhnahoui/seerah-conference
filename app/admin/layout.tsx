@@ -25,7 +25,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
   };
 
   const navItems = [
-    { href: '/admin/dashboard', label: 'الإحصائيات', icon: '📊' },
+    { href: '/admin/dashboard', label: 'الإحصائيات (مؤتمر)', icon: '📊' },
+    { href: '/admin/org-content', label: 'من نحن', icon: '🏛️' },
+    { href: '/admin/goals', label: 'الأهداف', icon: '🎯' },
+    { href: '/admin/org-stats', label: 'إحصائيات التجمّع', icon: '📈' },
     { href: '/admin/create-invitation', label: 'إنشاء دعوة', icon: '➕' },
     { href: '/admin/updates', label: 'إدارة المستجدات', icon: '📰' },
     { href: '/admin/distributors', label: 'الموزعون', icon: '🧑‍💼' },
@@ -45,7 +48,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
           <div>
             <p className="text-sm font-bold text-white leading-tight">لوحة الإدارة</p>
-            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>السيرة النبوية</p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.7)' }}>التجمّع الثقافي الإسلامي</p>
           </div>
         </div>
         <button onClick={handleLogout} className="text-xs px-3 py-1.5 rounded-lg font-medium transition-opacity hover:opacity-80"
@@ -62,13 +65,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       {/* Bottom nav */}
       <div className="fixed bottom-0 left-0 right-0 shadow-lg"
         style={{ background: '#fff', borderTop: '1px solid var(--color-border)' }}>
-        <div className="flex overflow-x-auto gap-1 px-1">
+        <div className="flex overflow-x-auto gap-0.5 px-1">
           {navItems.map((item) => {
             const active = pathname === item.href;
             return (
               <Link key={item.href} href={item.href}
-                className="flex-1 flex flex-col items-center py-3 px-2 gap-1.5 text-xs leading-tight font-medium transition-colors rounded-lg my-1"
-                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '68px' }}>
+                className="flex-1 flex flex-col items-center py-3 px-2 gap-1.5 text-[11px] leading-tight font-medium transition-colors rounded-lg my-1"
+                style={{ color: active ? 'var(--color-green)' : 'var(--color-text-light)', background: active ? 'rgba(26,92,42,0.06)' : 'transparent', minWidth: '70px' }}>
                 <span className="text-xl">{item.icon}</span>
                 <span className="whitespace-nowrap">{item.label}</span>
               </Link>
